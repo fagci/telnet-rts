@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from components import Position, Style
 from time import sleep
 
 from esper import World
 
+from components import Position, Style
 from systems import EnergySystem, RenderSystem
 
 world = World()

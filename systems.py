@@ -1,3 +1,7 @@
+from socket import socket, gethostname
+from select import select
+from queue import Empty, Queue
+
 from components import EnergySink, EnergySource, Position, Style
 from esper import Processor
 
@@ -10,30 +14,53 @@ class EnergySystem(Processor):
 
 class RenderSystem(Processor):
     def __init__(self):
-        from socket import socket, gethostname
         self.so = socket()
         self.so.setblocking(False)
-        self.so.bind((gethostname(), 5023))
+        self.so.bind(('127.0.0.1', 5023))
         self.connections = []
         self.so.listen()
+        self.inputs = [self.so]
+        self.outputs = []
+        self.queue = {}
 
     def render(self, pos, s):
-        try:
-            connection, address = self.so.accept()
-            connection.setblocking(False)
-            self.connections.append(connection)
-            print('conn:', connection, address)
-        except BlockingIOError:
-            pass
+        readable, writable, exceptional = select(self.inputs, self.outputs, self.inputs)
 
-        for connection in self.connections:
+        for s in readable:
+            if s is self.so:
+                connection, address = self.so.accept()
+                connection.setblocking(False)
+                self.inputs.append(connection)
+                self.queue[connection] = Queue()
+                print('conn:', connection, address)
+            else:
+                message = s.recv(4096)
+                if message:
+                    self.queue[s].put(message)
+                    if s not in self.outputs:
+                        self.outputs.append(s)
+                else:
+                    if s in self.outputs:
+                        self.outputs.remove(s)
+                    self.inputs.remove(s)
+                    s.close()
+                    del self.queue[s]
+
+        for s in writable:
             try:
-                message = connection.recv(4096)
-            except BlockingIOError:
-                continue
+                next_msg = self.queue[s].get_nowait()
+            except Empty:
+                self.outputs.remove(s)
+            else:
+                s.send(next_msg)
 
-            for connection in self.connections:
-                connection.send('123')
+        for s in exceptional:
+            self.inputs.remove(s)
+            if s in self.outputs:
+                self.outputs.remove(s)
+            s.close()
+            del self.queue[s]
+
 
     def process(self):
         for e, (pos, s) in self.world.get_components(Position, Style):
