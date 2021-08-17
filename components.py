@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from queue import Queue
 
 @dataclass
 class EnergySource:
@@ -25,3 +26,8 @@ class Player:
     def __init__(self):
         Player.__ID += 1
         self.id = self.__ID
+
+class NetworkData:
+    def __init__(self):
+        self.q_in = Queue()
+        self.q_out = Queue()

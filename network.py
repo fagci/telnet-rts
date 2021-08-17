@@ -1,69 +1,79 @@
 from queue import Queue
 from random import randrange
-from select import select
+from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 from socket import socket, SOL_SOCKET, SO_REUSEADDR
 from styles import PLAYER
-from threading import Lock, Thread
+from threading import Thread
 
 from esper import World
 
-from components import Player, Style, Position
+from components import NetworkData, Player, Position
 
 class NetworkThread(Thread):
     world: World
-    q_in: Queue
-    q_out: Queue
     server: socket
+    sel: DefaultSelector
+    connections: dict = {}
 
-    def __init__(self, world, q_in, q_out, addr='127.0.0.1', port=5023):
+    def __init__(self, world, host='127.0.0.1', port=5023):
         super().__init__()
         self.world = world
-        self.addr, self.port = addr, port
-        self.q_in, self.q_out = q_in, q_out
+        self.addr = (host, port)
 
-        self.server = socket()
-        self.server.setblocking(False)
-        self.server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.server.bind((addr, port))
-        self.server.listen(5)
+        self.sel = DefaultSelector()
 
-        self.connections = {self.server: (None, None)}
+
+    def accept(self, s, mask):
+        s_fd, addr = s.accept()
+        s_fd.setblocking(False)
+        player_id = self.create_player()
+        self.connections[s_fd] = (addr, player_id)
+        print('[+]', addr)
+        self.sel.register(s_fd, EVENT_READ | EVENT_WRITE, self.communicate)
+
+    def communicate(self, s, mask):
+        addr, player_id = self.connections[s]
+
+        if mask & EVENT_READ:
+            try:
+                data = s.recv(1024)
+                if data:
+                    print(f'data:{addr[0]}', data, flush=True)
+                    nd = self.world.component_for_entity(player_id, NetworkData)
+                    nd.q_out.put(data.decode(errors='ignore'))
+                else:
+                    self.world.delete_entity(player_id)
+                    print('[-]')
+                    del self.connections[s]
+                    self.sel.unregister(s)
+                    s.close()
+            except Exception as ex:
+                print(ex)
+
+        if mask & EVENT_WRITE:
+            nd = self.world.component_for_entity(player_id, NetworkData)
+            while not nd.q_out.empty():
+                s.send(nd.q_out.get().encode())
     
     def run(self):
+        self.__create_server()
+        self.sel.register(self.server, EVENT_READ, self.accept)
         while True:
-            r,w,e = select(self.connections.keys(), self.connections.keys(), [])
-            s:socket
+            for key, mask in self.sel.select():
+                key.data(key.fileobj, mask)
 
-            for s in r:
-                if s is self.server:
-                    s_fd, addr = self.server.accept()
-                    s_fd.setblocking(False)
-                    player = self.world.create_entity(
-                        Player(),
-                        PLAYER,
-                        Position(randrange(20), randrange(20))
-                    )
-                    self.connections[s_fd] = (addr, player)
-                    print('[+]', addr)
-                else:
-                    addr, player = self.connections[s]
-                    try:
-                        data = s.recv(1024)
-                        if data:
-                            print(f'data:{addr[0]}', data)
-                            self.q_in.put(data.decode(errors='ignore'))
-                        else:
-                            self.world.delete_entity(player)
-                            print('[-]', addr)
-                            del self.connections[s]
-                            s.close()
-                    except Exception as ex:
-                        print(ex)
+    def create_player(self):
+        return self.world.create_entity(
+            Player(),
+            PLAYER,
+            Position(randrange(20), randrange(20)),
+            NetworkData()
+        )
 
-            while not self.q_out.empty():
-                q_data = self.q_out.get()
-                for s in w:
-                    if s is not self.server:
-                        s.send(q_data.encode())
-
+    def __create_server(self):
+        self.server = socket()
+        self.server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.server.setblocking(False)
+        self.server.bind(self.addr)
+        self.server.listen(16)
 

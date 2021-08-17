@@ -1,6 +1,6 @@
 
 from queue import Queue
-from components import EnergySink, EnergySource, Position, Style
+from components import EnergySink, EnergySource, NetworkData, Position, Style
 from esper import Processor
 
 class EnergySystem(Processor):
@@ -11,11 +11,9 @@ class EnergySystem(Processor):
                     src.capacity -= sink.consumption
 
 class RenderSystem(Processor):
-    def __init__(self, q_in:Queue, q_out:Queue):
-        self.q_in, self.q_out = q_in, q_out
-        
     def process(self):
-        self.q_out.put('\u001b[2J')
-        for e, (pos, s) in self.world.get_components(Position, Style):
-            # self.q_out.put('\033[6n')
-            self.q_out.put(f'\033[{pos.x};{pos.y}H{s.icon}')
+        for ed, (nd,) in self.world.get_components(NetworkData):
+            nd.q_out.put('\u001b[2J')
+            for es, (pos, s) in self.world.get_components(Position, Style):
+                # nd.q_out.put('\033[6n')
+                nd.q_out.put(f'\033[{pos.x};{pos.y}H{s.icon}')
