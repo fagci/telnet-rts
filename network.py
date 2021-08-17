@@ -1,13 +1,12 @@
-from queue import Queue
 from random import randrange
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
-from socket import socket, SOL_SOCKET, SO_REUSEADDR
-from styles import PLAYER
+from socket import SOL_SOCKET, SO_REUSEADDR, socket
 from threading import Thread
 
 from esper import World
 
 from components import NetworkData, Player, Position
+from styles import PLAYER
 
 class NetworkThread(Thread):
     world: World
@@ -22,10 +21,10 @@ class NetworkThread(Thread):
         self.sel = DefaultSelector()
 
 
-    def accept(self, s, mask):
+    def accept(self, s, _):
         s_fd, addr = s.accept()
         s_fd.setblocking(False)
-        self.create_player(s_fd, addr)
+        self.__create_player(s_fd, addr)
 
 
     def communicate(self, s, mask):
@@ -39,7 +38,7 @@ class NetworkThread(Thread):
                     nd = self.world.component_for_entity(player_id, NetworkData)
                     nd.q_out.put(data.decode(errors='ignore'))
                 else:
-                    self.delete_player(player_id, s, addr)
+                    self.__delete_player(player_id, s, addr)
             except Exception as ex:
                 print(ex)
 
@@ -49,7 +48,7 @@ class NetworkThread(Thread):
                 try:
                     s.send(nd.q_out.get().encode())
                 except:
-                    self.delete_player(player_id, s, addr)
+                    self.__delete_player(player_id, s, addr)
     
     def run(self):
         self.__create_server()
@@ -58,14 +57,7 @@ class NetworkThread(Thread):
             for key, mask in self.sel.select():
                 key.data(key.fileobj, mask)
 
-    def delete_player(self, player_id, s, addr):
-        self.world.delete_entity(player_id)
-        del self.connections[s]
-        self.sel.unregister(s)
-        s.close()
-        print('[-]', player_id, addr)
-
-    def create_player(self, s, addr):
+    def __create_player(self, s, addr):
         player_id = self.world.create_entity(
             Player(),
             PLAYER,
@@ -76,6 +68,13 @@ class NetworkThread(Thread):
         self.sel.register(s, EVENT_READ | EVENT_WRITE, self.communicate)
         print('[+]', player_id, addr)
         return player_id
+
+    def __delete_player(self, player_id, s, addr):
+        self.world.delete_entity(player_id)
+        del self.connections[s]
+        self.sel.unregister(s)
+        s.close()
+        print('[-]', player_id, addr)
 
     def __create_server(self):
         self.server = socket()
