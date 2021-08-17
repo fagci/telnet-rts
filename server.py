@@ -2,7 +2,7 @@
 
 from socket import socket, gethostname
 from queue import Empty, Queue
-from threading import Thread
+from threading import Lock, Thread
 from time import sleep
 
 from esper import World
@@ -26,6 +26,7 @@ class NetworkThread(Thread):
         self.server.listen(5)
 
         self.connections = []
+        self.c_lock = Lock()
     
 
     def run(self):
@@ -33,9 +34,13 @@ class NetworkThread(Thread):
             try:
                 connection, address = self.server.accept()
                 connection.setblocking(False)
-                self.connections.append(connection)
-            except BlockingIOError:
-                pass
+                with self.c_lock:
+                    self.connections.append(connection)
+                print('new connection:', address)
+            except BlockingIOError as e:
+                sleep(0.05)
+
+            print('try recv')
 
             for connection in self.connections:
                 try:
@@ -45,6 +50,7 @@ class NetworkThread(Thread):
                 except BlockingIOError:
                     continue
 
+                print('check q')
                 while self.q_out.not_empty:
                     message = self.q_out.get().encode()
                     for connection in self.connections:
@@ -52,7 +58,8 @@ class NetworkThread(Thread):
                         try:
                             connection.send(message)
                         except:
-                            self.connections.remove(connection)
+                            with self.c_lock:
+                                self.connections.remove(connection)
                             print('some user disconnected')
 
 def main():
@@ -72,7 +79,8 @@ def main():
     try:
         while True:
             world.process()
-            sleep(0.05)
+            sleep(1)
+            print('loop')
     except KeyboardInterrupt:
         print('exit')
         exit(130)
