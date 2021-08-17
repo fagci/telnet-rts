@@ -6,7 +6,7 @@ from time import sleep
 from esper import World
 
 from components import Position, Style
-from network import NetworkThread
+from network2 import NetworkThread
 from systems import EnergySystem, RenderSystem
 
 world = World()

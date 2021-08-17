@@ -14,6 +14,7 @@ class NetworkThread(Thread):
     q_in: Queue
     q_out: Queue
     server: socket
+
     def __init__(self, world, q_in, q_out, addr='127.0.0.1', port=5023):
         super().__init__()
         self.world = world
@@ -22,12 +23,11 @@ class NetworkThread(Thread):
 
         self.server = socket()
         self.server.setblocking(False)
-        self.server.bind((addr, port))
         self.server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.server.bind((addr, port))
         self.server.listen(5)
 
         self.connections = {self.server: (None, None)}
-        self.c_lock = Lock()
     
     def run(self):
         while True:
