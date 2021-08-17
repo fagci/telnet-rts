@@ -15,6 +15,7 @@ class RenderSystem(Processor):
         self.q_in, self.q_out = q_in, q_out
         
     def process(self):
+        self.q_out.put('\u001b[2J')
         for e, (pos, s) in self.world.get_components(Position, Style):
             # self.q_out.put('\033[6n')
             self.q_out.put(f'\033[{pos.x};{pos.y}H{s.icon}')

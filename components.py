@@ -17,3 +17,11 @@ class Position:
 @dataclass
 class Style:
     icon: str = '@'
+
+@dataclass
+class Player:
+    id: int = 0
+    __ID: int = 0
+    def __init__(self):
+        Player.__ID += 1
+        self.id = self.__ID

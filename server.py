@@ -3,22 +3,25 @@
 from socket import socket
 from select import select
 from queue import Queue
+from random import randrange
 from threading import Lock, Thread
 from time import sleep
 
 from esper import World
 
-from components import Position, Style
+from components import Player, Position, Style
 from systems import EnergySystem, RenderSystem
 
 world = World()
 
 class NetworkThread(Thread):
+    world: World
     q_in: Queue
     q_out: Queue
     server: socket
-    def __init__(self, q_in, q_out, addr='127.0.0.1', port=5023):
+    def __init__(self, world, q_in, q_out, addr='127.0.0.1', port=5023):
         super().__init__()
+        self.world = world
         self.addr, self.port = addr, port
         self.q_in, self.q_out = q_in, q_out
 
@@ -27,18 +30,27 @@ class NetworkThread(Thread):
         self.server.bind((addr, port))
         self.server.listen(5)
 
-        self.connections = [self.server]
+        self.connections = {self.server: (None, None)}
         self.c_lock = Lock()
     
+    def get_entity(self, s):
+        pass
 
     def run(self):
         while True:
-            r,w,e = select(self.connections, self.connections, [])
+            r,w,e = select(self.connections.keys(), self.connections.keys(), [])
+            s:socket
 
             for s in r:
                 if s is self.server:
                     s_fd, addr = self.server.accept()
-                    self.connections.append(s_fd)
+                    s_fd.setblocking(False)
+                    self.connections[s_fd] = addr
+                    self.world.create_entity(
+                        Player(),
+                        Style(icon='⚉'),
+                        Position(randrange(20), randrange(20))
+                    )
                     print('[+]', addr)
                 else:
                     try:
@@ -47,11 +59,11 @@ class NetworkThread(Thread):
                             print(f'data:{addr[0]}', data)
                             self.q_in.put(data.decode(errors='ignore'))
                         else:
-                            raise
+                            raise ConnectionAbortedError('Client disconnected')
                     except Exception as ex:
                         print(ex)
-                        print('[-]', addr)
-                        self.connections.remove(s)
+                        print('[-]', self.connections[s])
+                        del self.connections[s]
                         s.close()
 
             while not self.q_out.empty():
@@ -70,7 +82,7 @@ def main():
 
     world.create_entity(Position(), Style())
 
-    network_thread = NetworkThread(net_q_in, net_q_out)
+    network_thread = NetworkThread(world, net_q_in, net_q_out)
     network_thread.setDaemon(True)
     network_thread.start()
     print('server listening')
@@ -79,7 +91,7 @@ def main():
         while True:
             world.process()
             sleep(1)
-            print('loop')
+            print('.')
     except KeyboardInterrupt:
         print('exit')
         exit(130)
