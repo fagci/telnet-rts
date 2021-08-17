@@ -23,11 +23,12 @@ class NetworkThread(Thread):
 
     def accept(self, s, _):
         s_fd, addr = s.accept()
-        s_fd.setblocking(False)
+        # s_fd.setblocking(False)
+        
         self.__create_player(s_fd, addr)
 
 
-    def communicate(self, s, mask):
+    def communicate(self, s:socket, mask):
         addr, player_id = self.connections[s]
 
         if mask & EVENT_READ:
@@ -39,6 +40,8 @@ class NetworkThread(Thread):
                     nd.q_out.put(data.decode(errors='ignore'))
                 else:
                     self.__delete_player(player_id, s, addr)
+            except BlockingIOError:
+                print('!')
             except Exception as ex:
                 print(ex)
 
