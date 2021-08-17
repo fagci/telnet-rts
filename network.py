@@ -2,6 +2,7 @@ from queue import Queue
 from random import randrange
 from select import select
 from socket import socket, SOL_SOCKET, SO_REUSEADDR
+from styles import PLAYER
 from threading import Lock, Thread
 
 from esper import World
@@ -28,9 +29,6 @@ class NetworkThread(Thread):
         self.connections = {self.server: (None, None)}
         self.c_lock = Lock()
     
-    def get_entity(self, s):
-        pass
-
     def run(self):
         while True:
             r,w,e = select(self.connections.keys(), self.connections.keys(), [])
@@ -42,26 +40,25 @@ class NetworkThread(Thread):
                     s_fd.setblocking(False)
                     player = self.world.create_entity(
                         Player(),
-                        Style(icon='⚉'),
+                        PLAYER,
                         Position(randrange(20), randrange(20))
                     )
                     self.connections[s_fd] = (addr, player)
                     print('[+]', addr)
                 else:
+                    addr, player = self.connections[s]
                     try:
                         data = s.recv(1024)
                         if data:
                             print(f'data:{addr[0]}', data)
                             self.q_in.put(data.decode(errors='ignore'))
                         else:
-                            raise ConnectionAbortedError('Client disconnected')
+                            self.world.delete_entity(player)
+                            print('[-]', addr)
+                            del self.connections[s]
+                            s.close()
                     except Exception as ex:
                         print(ex)
-                        addr, player = self.connections[s]
-                        self.world.delete_entity(player)
-                        print('[-]', addr)
-                        del self.connections[s]
-                        s.close()
 
             while not self.q_out.empty():
                 q_data = self.q_out.get()
