@@ -1,7 +1,6 @@
-
-from queue import Queue
-from components import EnergySink, EnergySource, NetworkData, Position, Style
 from esper import Processor
+
+from components import EnergySink, EnergySource, NetworkData, Position, Style
 
 class EnergySystem(Processor):
     def process(self):
@@ -13,7 +12,7 @@ class EnergySystem(Processor):
 class RenderSystem(Processor):
     def process(self):
         for ed, (nd,) in self.world.get_components(NetworkData):
-            nd.q_out.put('\u001b[2J')
+            nd.q_out.put('\033[2J')
             for es, (pos, s) in self.world.get_components(Position, Style):
                 # nd.q_out.put('\033[6n')
                 nd.q_out.put(f'\033[{pos.x};{pos.y}H{s.icon}')
