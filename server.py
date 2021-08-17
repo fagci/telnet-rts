@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-from socket import socket, gethostname
-from queue import Empty, Queue
+from socket import socket
+from select import select
+from queue import Queue
 from threading import Lock, Thread
 from time import sleep
 
@@ -15,6 +16,7 @@ world = World()
 class NetworkThread(Thread):
     q_in: Queue
     q_out: Queue
+    server: socket
     def __init__(self, q_in, q_out, addr='127.0.0.1', port=5023):
         super().__init__()
         self.addr, self.port = addr, port
@@ -25,42 +27,39 @@ class NetworkThread(Thread):
         self.server.bind((addr, port))
         self.server.listen(5)
 
-        self.connections = []
+        self.connections = [self.server]
         self.c_lock = Lock()
     
 
     def run(self):
         while True:
-            try:
-                connection, address = self.server.accept()
-                connection.setblocking(False)
-                with self.c_lock:
-                    self.connections.append(connection)
-                print('new connection:', address)
-            except BlockingIOError as e:
-                sleep(0.05)
+            r,w,e = select(self.connections, self.connections, [])
 
-            print('try recv')
+            for s in r:
+                if s is self.server:
+                    s_fd, addr = self.server.accept()
+                    self.connections.append(s_fd)
+                    print('[+]', addr)
+                else:
+                    try:
+                        data = s.recv(1024)
+                        if data:
+                            print(f'data:{addr[0]}', data)
+                            self.q_in.put(data.decode(errors='ignore'))
+                        else:
+                            raise
+                    except Exception as ex:
+                        print(ex)
+                        print('[-]', addr)
+                        self.connections.remove(s)
+                        s.close()
 
-            for connection in self.connections:
-                try:
-                    message = connection.recv(1024).decode(errors='ignore')
-                    print('got msg:', message)
-                    self.q_in.put(message)
-                except BlockingIOError:
-                    continue
+            while not self.q_out.empty():
+                q_data = self.q_out.get()
+                for s in w:
+                    if s is not self.server:
+                        s.send(q_data.encode())
 
-                print('check q')
-                while self.q_out.not_empty:
-                    message = self.q_out.get().encode()
-                    for connection in self.connections:
-                        print('send msg:', message)
-                        try:
-                            connection.send(message)
-                        except:
-                            with self.c_lock:
-                                self.connections.remove(connection)
-                            print('some user disconnected')
 
 def main():
     net_q_in = Queue()
