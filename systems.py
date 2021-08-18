@@ -8,11 +8,16 @@ class System(Processor):
     def get_components(self, *args) -> list[tuple[int, tuple]]:
         return self.world.get_components(*args)
     def remove_component(self, e, c):
+        print('[c-]', e, c)
         return self.world.remove_component(e, c)
     def add_component(self, e, c):
+        print('[c+]', e, c)
         return self.world.add_component(e, c)
     def delete_entity(self, e):
+        print('[e-]', e)
         return self.world.delete_entity(e)
+    def has_component(self, e, c):
+        return self.world.has_component(e, c)
 
 class EnergySystem(System):
     def process(self):
@@ -25,9 +30,10 @@ class PlayerConnectionSystem(System):
     def process(self):
         for e, (src,) in self.get_components(Disconnect):
             self.remove_component(e, Disconnect)
-            self.delete_entity(e)
-            for r, (room,) in self.get_components(Room):
-                self.add_component(r, Dirty())
+            if self.has_component(e, Dirty):
+                self.delete_entity(e)
+            else:
+                self.add_component(e, Dirty())
         for e, (src,) in self.get_components(Connect):
             self.remove_component(e, Connect)
             self.add_component(e, Dirty())
