@@ -23,7 +23,7 @@ class NetworkThread(Thread):
 
     def accept(self, s, _):
         s_fd, addr = s.accept()
-        # s_fd.setblocking(False)
+        s_fd.setblocking(False)
         
         self.__create_player(s_fd, addr)
 
@@ -40,8 +40,8 @@ class NetworkThread(Thread):
                     nd.q_out.put(data.decode(errors='ignore'))
                 else:
                     self.__delete_player(player_id, s, addr)
-            except BlockingIOError:
-                print('!')
+            except BlockingIOError as e:
+                print(repr(e))
             except Exception as ex:
                 print(ex)
 
@@ -64,7 +64,7 @@ class NetworkThread(Thread):
         player_id = self.world.create_entity(
             Player(),
             PLAYER,
-            Position(randrange(20), randrange(20)),
+            Position(1+randrange(19), 1+randrange(19)),
             NetworkData()
         )
         self.connections[s] = (addr, player_id)
@@ -73,6 +73,8 @@ class NetworkThread(Thread):
         return player_id
 
     def __delete_player(self, player_id, s, addr):
+        if self.connections.get(s) is None: # already deleted
+            return
         self.world.delete_entity(player_id)
         del self.connections[s]
         self.sel.unregister(s)

@@ -15,8 +15,8 @@ def main():
     world.add_processor(EnergySystem())
     world.add_processor(RenderSystem())
 
-    world.create_entity(Position(3,3), Style('⚑'))
-    world.create_entity(Position(6,6), Style('★'))
+    world.create_entity(Position(3,3), Style('O'))
+    world.create_entity(Position(6,6), Style('O'))
 
     network_thread = NetworkThread(world)
     network_thread.setDaemon(True)
@@ -26,7 +26,7 @@ def main():
     try:
         while True:
             world.process()
-            sleep(0.05)
+            sleep(1)
     except KeyboardInterrupt:
         print('exit')
         exit(130)
