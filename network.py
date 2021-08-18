@@ -1,12 +1,13 @@
 from random import randrange
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
+import selectors
 from socket import SOL_SOCKET, SO_REUSEADDR, socket
 from threading import Thread
 
 from esper import World
 
-from components import Connect, Dirty, Disconnect, NetworkData, Player, Position
-from styles import PLAYER
+from components import Disconnect, NetworkData
+import prefabs
 
 class NetworkThread(Thread):
     world: World
@@ -22,16 +23,17 @@ class NetworkThread(Thread):
 
 
     def accept(self, s, _):
-        s_fd, addr = s.accept()
-        s_fd.setblocking(False)
+        connection, addr = s.accept()
+        connection.setblocking(False)
         
-        self.__create_player(s_fd, addr)
+        self.__create_player(connection, addr)
 
 
     def communicate(self, s:socket, mask):
         addr, player_id = self.connections[s]
 
         if mask & EVENT_READ:
+            print('[event] READ')
             try:
                 data = s.recv(1024)
                 if data:
@@ -61,13 +63,7 @@ class NetworkThread(Thread):
                 key.data(key.fileobj, mask)
 
     def __create_player(self, s, addr):
-        player_id = self.world.create_entity(
-            Player(),
-            PLAYER,
-            Position(1+randrange(19), 1+randrange(19)),
-            NetworkData(),
-            Connect()
-        )
+        player_id = self.world.create_entity(*prefabs.player(1+randrange(19), 1+randrange(19)))
         self.connections[s] = (addr, player_id)
         self.sel.register(s, EVENT_READ | EVENT_WRITE, self.communicate)
         print('[+]', player_id, addr)
@@ -87,5 +83,5 @@ class NetworkThread(Thread):
         self.server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.server.setblocking(False)
         self.server.bind(self.addr)
-        self.server.listen(16)
+        self.server.listen()
 
