@@ -5,7 +5,7 @@ from threading import Thread
 
 from esper import World
 
-from components import NetworkData, Player, Position
+from components import Connect, Dirty, Disconnect, NetworkData, Player, Position
 from styles import PLAYER
 
 class NetworkThread(Thread):
@@ -65,7 +65,8 @@ class NetworkThread(Thread):
             Player(),
             PLAYER,
             Position(1+randrange(19), 1+randrange(19)),
-            NetworkData()
+            NetworkData(),
+            Connect()
         )
         self.connections[s] = (addr, player_id)
         self.sel.register(s, EVENT_READ | EVENT_WRITE, self.communicate)
@@ -75,7 +76,7 @@ class NetworkThread(Thread):
     def __delete_player(self, player_id, s, addr):
         if self.connections.get(s) is None: # already deleted
             return
-        self.world.delete_entity(player_id)
+        self.world.add_component(player_id, Disconnect())
         del self.connections[s]
         self.sel.unregister(s)
         s.close()

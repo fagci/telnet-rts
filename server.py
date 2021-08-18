@@ -4,17 +4,19 @@ from time import sleep
 
 from esper import World
 
-from components import Position, Style
+from components import Dirty, Position, Room, Style
 from network import NetworkThread
-from systems import EnergySystem, RenderSystem
+from systems import EnergySystem, RenderSystem, PlayerConnectionSystem
 
 world = World()
 
 
 def main():
     world.add_processor(EnergySystem())
+    world.add_processor(PlayerConnectionSystem())
     world.add_processor(RenderSystem())
 
+    world.create_entity(Room(), Dirty())
     world.create_entity(Position(3,3), Style('O'))
     world.create_entity(Position(6,6), Style('O'))
 

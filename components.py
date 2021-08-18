@@ -31,3 +31,19 @@ class NetworkData:
     def __init__(self):
         self.q_in = Queue()
         self.q_out = Queue()
+
+class Dirty:
+    pass
+
+class Connect:
+    pass
+
+class Disconnect:
+    pass
+
+@dataclass
+class Room:
+    x: int = 0
+    y: int = 0
+    w: int = 20
+    h: int = 20
