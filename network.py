@@ -1,7 +1,7 @@
 from random import randrange
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
-import selectors
 from socket import SOL_SOCKET, SO_REUSEADDR, socket
+from telnetlib import DO, DONT, ECHO, IAC, NAWS, NEW_ENVIRON, SGA, TTYPE, WILL
 from threading import Thread
 
 from esper import World
@@ -25,6 +25,17 @@ class NetworkThread(Thread):
     def accept(self, s, _):
         connection, addr = s.accept()
         connection.setblocking(False)
+
+        def sendCommand(a, b):
+            connection.send(IAC + a + b)
+
+        sendCommand(WILL, ECHO);
+        sendCommand(DONT, ECHO);
+        sendCommand(DO, NAWS);
+        sendCommand(WILL, SGA);
+        sendCommand(DO, SGA);
+        sendCommand(DO, TTYPE);
+        sendCommand(DO, NEW_ENVIRON);
         
         self.__create_player(connection, addr)
 
@@ -33,11 +44,10 @@ class NetworkThread(Thread):
         addr, player_id = self.connections[s]
 
         if mask & EVENT_READ:
-            print('[event] READ')
             try:
                 data = s.recv(1024)
                 if data:
-                    print(f'data:{addr[0]}', data, flush=True)
+                    print(f'data:{player_id}', data, flush=True)
                     nd = self.world.component_for_entity(player_id, NetworkData)
                     nd.q_out.put(data.decode(errors='ignore'))
                 else:
