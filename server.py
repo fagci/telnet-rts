@@ -28,7 +28,7 @@ def main():
     try:
         while True:
             world.process()
-            sleep(1)
+            sleep(0.05)
     except KeyboardInterrupt:
         print('exit')
         exit(130)
