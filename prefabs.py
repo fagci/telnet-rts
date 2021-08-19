@@ -1,10 +1,9 @@
-from components import Connect, NetworkData, Player, Dirty, Position, Style
+from components import Connect, NetworkData, Player, Dirty, Position, Renderable, Style
 
 def player(x, y, icon='☺'):
     return [
         Player(),
-        Style(icon),
-        Position(x, y),
+        Renderable(x,y,1,1,icon),
         NetworkData(),
         Connect()
     ]

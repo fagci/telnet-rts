@@ -2,24 +2,6 @@ from dataclasses import dataclass
 from queue import Queue
 
 @dataclass
-class EnergySource:
-    max_capacity: int = 1000
-    capacity: float = max_capacity
-
-@dataclass
-class EnergySink:
-    consumption: int = 1
-
-@dataclass
-class Position:
-    x: int = 0
-    y: int = 0
-
-@dataclass
-class Style:
-    icon: str = '@'
-
-@dataclass
 class Player:
     id: int = 0
     __ID: int = 0
@@ -32,8 +14,35 @@ class NetworkData:
         self.q_in = Queue()
         self.q_out = Queue()
 
-class Dirty:
-    pass
+class Dirtyable:
+    _dirty: bool = True
+    def __setattr__(self, name, value):
+        if name != '_dirty':
+            super().__setattr__(name, value)
+            self._dirty = True
+
+    def set_pristine(self):
+        self._dirty = False
+
+    def set_dirty(self):
+        self._dirty = True
+
+    @property
+    def is_dirty(self):
+        return self._dirty
+
+@dataclass
+class Renderable(Dirtyable):
+    x: int
+    y: int
+    w: int
+    h: int
+    fg_char: str = 'X'
+    bg_char: str = ''
+    fg_color: int = 7
+    bg_color: int = 234
+    # layer?
+
 
 class Connect:
     pass
@@ -41,9 +50,3 @@ class Connect:
 class Disconnect:
     pass
 
-@dataclass
-class Room:
-    x: int = 0
-    y: int = 0
-    w: int = 20
-    h: int = 20
