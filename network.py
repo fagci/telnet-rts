@@ -22,24 +22,6 @@ class NetworkThread(Thread):
         self.sel = DefaultSelector()
 
 
-    def accept(self, s, _):
-        connection, addr = s.accept()
-        connection.setblocking(False)
-
-        def sendCommand(a, b):
-            connection.send(IAC + a + b)
-
-        sendCommand(WILL, ECHO);
-        sendCommand(DONT, ECHO);
-        sendCommand(DO, NAWS);
-        sendCommand(WILL, SGA);
-        sendCommand(DO, SGA);
-        sendCommand(DO, TTYPE);
-        sendCommand(DO, NEW_ENVIRON);
-        
-        self.__create_player(connection, addr)
-
-
     def communicate(self, s:socket, mask):
         addr, player_id = self.connections[s]
 
@@ -64,7 +46,24 @@ class NetworkThread(Thread):
                     s.send(nd.q_out.get().encode())
                 except:
                     self.__delete_player(player_id, s, addr)
+
+
+    def accept(self, s, _):
+        connection, addr = s.accept()
+        connection.setblocking(False)
+
+        # tell telnet client to send data asap
+        connection.send(IAC + WILL + ECHO);
+        connection.send(IAC + DONT + ECHO);
+        connection.send(IAC + DO + NAWS);
+        connection.send(IAC + WILL + SGA);
+        connection.send(IAC + DO + SGA);
+        connection.send(IAC + DO + TTYPE);
+        connection.send(IAC + DO + NEW_ENVIRON);
+        
+        self.__create_player(connection, addr)
     
+
     def run(self):
         self.__create_server()
         self.sel.register(self.server, EVENT_READ, self.accept)
@@ -72,10 +71,10 @@ class NetworkThread(Thread):
             for key, mask in self.sel.select():
                 key.data(key.fileobj, mask)
 
-    def __create_player(self, s, addr):
+    def __create_player(self, connection, addr):
         player_id = self.world.create_entity(*prefabs.player(1+randrange(19), 1+randrange(19)))
-        self.connections[s] = (addr, player_id)
-        self.sel.register(s, EVENT_READ | EVENT_WRITE, self.communicate)
+        self.connections[connection] = (addr, player_id)
+        self.sel.register(connection, EVENT_READ | EVENT_WRITE, self.communicate)
         print('[+]', player_id, addr)
         return player_id
 
