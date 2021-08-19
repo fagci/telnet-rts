@@ -18,8 +18,8 @@ class Dirtyable:
     _dirty: bool = True
     def __setattr__(self, name, value):
         if name != '_dirty':
-            super().__setattr__(name, value)
             self._dirty = True
+        super(Dirtyable, self).__setattr__(name, value)
 
     def set_pristine(self):
         self._dirty = False
@@ -35,8 +35,8 @@ class Dirtyable:
 class Renderable(Dirtyable):
     x: int
     y: int
-    w: int
-    h: int
+    w: int = 0
+    h: int = 0
     fg_char: str = 'X'
     bg_char: str = ''
     fg_color: int = 7

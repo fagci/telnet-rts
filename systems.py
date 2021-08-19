@@ -46,8 +46,9 @@ class PlayerConnectionSystem(System):
             self.remove_component(e, Disconnect)
             self.delete_entity(e)
 
-        for e, (src,) in self.get_components(Connect):
+        for e, (src, nd) in self.get_components(Connect, NetworkData):
             # placeholder
+            nd.q_out.put(cls())
             self.remove_component(e, Connect)
 
 class RenderSystem(System):
@@ -59,8 +60,9 @@ class RenderSystem(System):
             if r.is_dirty:
                 has_updates = True
                 break
-        for _, (r,) in self.get_components(Renderable):
-            r.set_dirty()
+        if has_updates:
+            for _, (r,) in self.get_components(Renderable):
+                r.set_dirty()
                 
 
     def render(self):
@@ -69,7 +71,8 @@ class RenderSystem(System):
             append = output.append
 
             for es, (room,) in self.get_components(Renderable):
-                append(cls())
+                if not room.is_dirty:
+                    continue
 
                 x1, x2 = room.x, room.x + room.w
                 y1, y2 = room.y, room.y + room.h
@@ -95,11 +98,6 @@ class RenderSystem(System):
             append(mv_cursor())
             nd.q_out.put(''.join(output))
 
-    def finalize(self):
-        for r, (dirty,) in self.get_components(Dirty):
-            self.remove_component(r, Dirty)
-
     def process(self):
         self.update_render_tree()
         self.render()
-        self.finalize()
