@@ -25,3 +25,17 @@ class SC:
     BOLD = 1
 
 
+def mv_cursor(x=0, y=0, text=''):
+    return f'\033[{y+1};{x+1}H{text}'
+
+def cls():
+    return '\033[2J'
+
+def color_fg(c):
+    return f'\033[38;5;{c}m'
+
+def color_bg(c):
+    return f'\033[48;5;{c}m'
+
+def color(c):
+    return f'\033[{c}m'
