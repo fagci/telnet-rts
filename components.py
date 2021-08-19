@@ -14,6 +14,16 @@ class NetworkData:
         self.q_in = Queue()
         self.q_out = Queue()
 
+    def send(self, data):
+        self.q_out.put(data)
+
+    def recv(self):
+        return self.q_in.get()
+
+    @property
+    def has_data(self):
+        return not self.q_in.empty()
+
 class Dirtyable:
     _dirty: bool = True
     def __setattr__(self, name, value):

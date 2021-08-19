@@ -20,7 +20,7 @@ def main():
     world.add_processor(PlayerConnectionSystem())
     world.add_processor(RenderSystem())
 
-    world.create_entity(Renderable(0, 0, 20, 20, '█', ' '))
+    world.create_entity(Renderable(0, 0, 40, 20, '█', ' '))
 
     network_thread = NetworkThread(world, '0.0.0.0')
     network_thread.setDaemon(True)
