@@ -31,7 +31,7 @@ class NetworkThread(Thread):
                 if data:
                     print(f'data:{player_id}', data, flush=True)
                     nd = self.world.component_for_entity(player_id, NetworkData)
-                    nd.q_out.put(data.decode(errors='ignore'))
+                    nd.q_in.put(data)
                 else:
                     self.__delete_player(player_id, s, addr)
             except BlockingIOError as e:

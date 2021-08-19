@@ -4,6 +4,12 @@ from components import Connect, Dirty, Disconnect, EnergySink, EnergySource, Net
 
 from styles import C, BC, SC
 
+class KeyCodes:
+    UP = b'\x1b[A'
+    RIGHT = b'\x1b[C'
+    DOWN = b'\x1b[B'
+    LEFT = b'\x1b[D'
+
 class System(Processor):
     """Fix types, ease access to methods"""
     world: World
@@ -20,6 +26,27 @@ class System(Processor):
         return self.world.delete_entity(e)
     def has_component(self, e, c):
         return self.world.has_component(e, c)
+
+class InputHandleSystem(System):
+    def process(self):
+        for e, (nd, pos) in self.get_components(NetworkData, Position):
+            while not nd.q_in.empty():
+                data = nd.q_in.get()
+                if data == KeyCodes.UP:
+                    pos.y -= 1
+                    self.add_component(e, Dirty())
+                if data == KeyCodes.DOWN:
+                    pos.y += 1
+                    self.add_component(e, Dirty())
+                if data == KeyCodes.LEFT:
+                    pos.x -= 1
+                    self.add_component(e, Dirty())
+                if data == KeyCodes.RIGHT:
+                    pos.x += 1
+                    self.add_component(e, Dirty())
+                    
+
+
 
 class EnergySystem(System):
     def process(self):

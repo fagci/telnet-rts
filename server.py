@@ -6,12 +6,18 @@ from esper import World
 
 from components import Dirty, Position, Room, Style
 from network import NetworkThread
-from systems import EnergySystem, RenderSystem, PlayerConnectionSystem
+from systems import (
+    EnergySystem,
+    InputHandleSystem,
+    PlayerConnectionSystem,
+    RenderSystem,
+)
 
 world = World()
 
 
 def main():
+    world.add_processor(InputHandleSystem())
     world.add_processor(EnergySystem())
     world.add_processor(PlayerConnectionSystem())
     world.add_processor(RenderSystem())
@@ -20,7 +26,7 @@ def main():
     world.create_entity(Position(3,3), Style('O'))
     world.create_entity(Position(6,6), Style('O'))
 
-    network_thread = NetworkThread(world)
+    network_thread = NetworkThread(world, '0.0.0.0')
     network_thread.setDaemon(True)
     network_thread.start()
     print('server listening')
