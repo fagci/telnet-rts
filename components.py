@@ -51,6 +51,13 @@ class Renderable(Dirtyable):
     bg_char: str = ''
     fg_color: int = 7
     bg_color: int = 234
+    fg_animation: str = ''
+    bg_animation: str = ''
+    fg_animation_speed: float = 1
+    bg_animation_speed: float = 1
+    fg_animation_time: float = 0
+    bg_animation_time: float = 0
+
     # layer?
 
 

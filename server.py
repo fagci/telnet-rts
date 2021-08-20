@@ -4,7 +4,7 @@ from time import sleep
 
 from esper import World
 
-from components import Renderable
+from prefabs import room, fire
 from network import NetworkThread
 from systems import (
     InputHandleSystem,
@@ -20,7 +20,8 @@ def main():
     world.add_processor(PlayerConnectionSystem())
     world.add_processor(RenderSystem())
 
-    world.create_entity(Renderable(0, 0, 40, 20, '█', ' '))
+    world.create_entity(*room())
+    world.create_entity(*fire(5,5))
 
     network_thread = NetworkThread(world, '0.0.0.0')
     network_thread.setDaemon(True)

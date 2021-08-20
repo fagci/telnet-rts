@@ -3,7 +3,7 @@ from esper import Processor, World
 from components import Connect, Renderable, Disconnect, NetworkData, Player
 
 from styles import C, BC, SC, mv_cursor, cls, color, color_bg, color_fg
-
+from time import time
 
 class KeyCodes:
     UP = b'\x1b[A'
@@ -70,6 +70,22 @@ class RenderSystem(System):
             append = output.append
 
             for es, (obj,) in self.get_components(Renderable):
+
+                t = time()
+
+                if obj.fg_animation and (t - obj.fg_animation_time > 1 / obj.fg_animation_speed):
+                    animation_length = len(obj.fg_animation)
+                    current_animation_idx = obj.fg_animation.find(obj.fg_char)
+                    obj.fg_char = obj.fg_animation[(current_animation_idx+1) % animation_length]
+                    obj.fg_animation_time = t
+
+                if obj.bg_animation and (t - obj.bg_animation_time > 1 / obj.bg_animation_speed):
+                    animation_length = len(obj.bg_animation)
+                    current_animation_idx = obj.bg_animation.find(obj.bg_char)
+                    obj.bg_char = obj.bg_animation[(current_animation_idx+1) % animation_length]
+                    obj.bg_animation_time = t
+
+
                 if not obj.is_dirty:
                     continue
 
