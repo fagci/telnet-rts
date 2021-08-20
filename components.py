@@ -60,6 +60,7 @@ class Renderable(Dirtyable):
 
     # layer?
 
+
 class Terrain(Dirtyable):
     SCALE = 0.01
     def __init__(self):

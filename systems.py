@@ -65,11 +65,9 @@ class RenderSystem(System):
                 
 
     def render(self):
-        for ed, (nd,) in self.get_components(NetworkData):
+        for ed, (player, nd, pos) in self.get_components(Player, NetworkData, Renderable):
             output = []
             append = output.append
-
-            terrain = None
 
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
@@ -122,6 +120,9 @@ class RenderSystem(System):
 
                 append(color(SC.RESET))
                 obj.set_pristine()
+
+            append(mv_cursor(0, 20))
+            append(f'{player.id}: x={pos.x}, y={pos.y}')
 
             append(mv_cursor())
             nd.q_out.put(''.join(output))
