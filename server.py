@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from components import Terrain
 from time import sleep
 
 from esper import World
@@ -20,7 +21,8 @@ def main():
     world.add_processor(PlayerConnectionSystem())
     world.add_processor(RenderSystem())
 
-    world.create_entity(*room())
+    # world.create_entity(*room())
+    world.create_entity(Terrain())
     world.create_entity(*fire(5,5))
 
     network_thread = NetworkThread(world, '0.0.0.0')

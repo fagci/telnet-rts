@@ -10,7 +10,7 @@ def player(x, y, icon='☺'):
 
 def fire(x,y):
     return [
-        Renderable(x,y,fg_animation='≈~')
+        Renderable(x,y,fg_animation='≈~', fg_color=202)
     ]
 
 def room():

@@ -1,9 +1,9 @@
+from time import time
+
 from esper import Processor, World
 
-from components import Connect, Renderable, Disconnect, NetworkData, Player
-
-from styles import C, BC, SC, mv_cursor, cls, color, color_bg, color_fg
-from time import time
+from components import Connect, Disconnect, NetworkData, Player, Renderable, Terrain
+from styles import BC, C, SC, cls, color, color_bg, color_fg, mv_cursor
 
 class KeyCodes:
     UP = b'\x1b[A'
@@ -69,6 +69,18 @@ class RenderSystem(System):
             output = []
             append = output.append
 
+            terrain = None
+
+            for e, (t,) in self.get_components(Terrain):
+                terrain = t
+                if t.is_dirty:
+                    for x in range(80):
+                        for y in range(24):
+                            append(color_bg(t.get(x,y)))
+                            append(mv_cursor(x,y,' '))
+                append(color(SC.RESET))
+                t.set_pristine()
+
             for es, (obj,) in self.get_components(Renderable):
 
                 t = time()
@@ -92,7 +104,7 @@ class RenderSystem(System):
                 x1, x2 = obj.x, obj.x + obj.w
                 y1, y2 = obj.y, obj.y + obj.h
 
-                append(color_bg(obj.bg_color))
+                # append(color_bg(obj.bg_color))
                 is_player_self = ed == es and self.has_component(es, Player)
                 if is_player_self:
                     append(color(C.GREEN))
@@ -101,6 +113,7 @@ class RenderSystem(System):
 
                 for x in range(x1, x2 + 1):
                     for y in range(y1, y2 + 1):
+                        append(color_bg(terrain.get(x,y)))
                         if x == x1 or x == x2 or y == y1 or y == y2:
                             append(mv_cursor(x, y, obj.fg_char))
                             append(color(SC.RESET))
