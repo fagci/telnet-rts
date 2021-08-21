@@ -14,7 +14,7 @@ class KeyCodes:
 class System(Processor):
     """Fix types, ease access to methods"""
     world: World
-    def get_components(self, *args) -> list[tuple[int, tuple]]:
+    def get_components(self, *args) -> list:
         return self.world.get_components(*args)
     def remove_component(self, e, c):
         return self.world.remove_component(e, c)
@@ -105,7 +105,7 @@ class RenderSystem(System):
                 # append(color_bg(obj.bg_color))
                 is_player_self = ed == es and self.has_component(es, Player)
                 if is_player_self:
-                    append(color(C.GREEN))
+                    append(color_fg(5))
                 else:
                     append(color_fg(obj.fg_color))
 
