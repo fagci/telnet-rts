@@ -1,9 +1,9 @@
-from telnetlib import IAC, NAWS, SB, WILL
+from telnetlib import IAC, NAWS, SB
 from time import time
 
 from esper import Processor, World
 
-from components import Connect, Disconnect, NetworkData, Player, Renderable, Terrain
+from components import Connect, Disconnect, Player, Renderable, Terrain
 from styles import SC, bold, cls, color, color_bg, color_fg, mv_cursor, color_reset
 
 from struct import unpack
@@ -27,6 +27,9 @@ class System(Processor):
         return self.world.delete_entity(e)
     def has_component(self, e, c):
         return self.world.has_component(e, c)
+    def log(self, *args, **kwargs):
+        n = self.__class__.__name__.split('System')[0]
+        print(f'[{n}]', *args, **kwargs)
 
 class TelnetSystem(System):
     def process_cmd(self, player, renderable, data):
@@ -34,13 +37,13 @@ class TelnetSystem(System):
             if command.startswith(SB + NAWS):
                 player.win_h, player.win_w = unpack('HH', command[6:1:-1])
                 renderable.dirty = 1
-                print(f'[T] w={player.win_w}, h={player.win_h}')
+                self.log(f'w={player.win_w}, h={player.win_h}')
 
 
     def process(self):
-        for _, (nd, player, renderable) in self.get_components(NetworkData, Player, Renderable):
-            while nd.has_data:
-                data = nd.recv()
+        for _, (player, renderable) in self.get_components(Player, Renderable):
+            while player.has_data:
+                data = player.recv()
                 if data == KeyCodes.UP:
                     renderable.y -= 1
                 elif data == KeyCodes.DOWN:
@@ -53,15 +56,17 @@ class TelnetSystem(System):
                     self.process_cmd(player, renderable, data)
 
 
-class PlayerConnectionSystem(System):
+class PlayerSystem(System):
     def process(self):
-        for e, (_,) in self.get_components(Disconnect):
+        for e, (_, player) in self.get_components(Disconnect, Player):
+            self.log('-', player.id)
             # FIXME: render before leave
             self.remove_component(e, Disconnect)
             self.delete_entity(e)
 
-        for e, (_, nd) in self.get_components(Connect, NetworkData):
-            nd.q_out.put(cls())
+        for e, (_, player) in self.get_components(Connect, Player):
+            self.log('+', player.id)
+            player.send(cls())
             self.remove_component(e, Connect)
 
 class RenderSystem(System):
@@ -79,7 +84,7 @@ class RenderSystem(System):
                 
 
     def render(self):
-        for ed, (player, nd, pos) in self.get_components(Player, NetworkData, Renderable):
+        for ed, (player, pos) in self.get_components(Player, Renderable):
             output = []
             append = output.append
 
@@ -143,7 +148,7 @@ class RenderSystem(System):
             append(f'{player.id}: x={pos.x}, y={pos.y}')
 
             append(mv_cursor())
-            nd.q_out.put(''.join(output))
+            player.send(''.join(output))
 
     def process(self):
         self.update_render_tree()

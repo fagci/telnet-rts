@@ -7,22 +7,14 @@ class Player:
     win_w: int = 80
     win_h : int = 24
 
+    state: int = 0
+    cmd: int = -1
+
     __ID: int = 0
     
     def __init__(self):
         Player.__ID += 1
         self.id = self.__ID
-
-@dataclass
-class NetworkData:
-    S_CMD = 1
-    S_VAL1 = 2
-    S_VAL2 = 3
-    
-    state: int = 0
-    cmd: int = -1
-    
-    def __init__(self):
         self.q_in = Queue()
         self.q_out = Queue()
 
@@ -36,12 +28,14 @@ class NetworkData:
     def has_data(self):
         return not self.q_in.empty()
 
+
 class Dirtyable:
     dirty: bool = True
     def __setattr__(self, name, value):
         if name != 'dirty':
             self.dirty = True
         super(Dirtyable, self).__setattr__(name, value)
+
 
 @dataclass
 class Renderable(Dirtyable):
@@ -88,9 +82,9 @@ class Terrain(Dirtyable):
         return b
 
 
-
 class Connect:
     pass
+
 
 class Disconnect:
     pass
