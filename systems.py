@@ -36,6 +36,7 @@ class TelnetSystem(System):
         for command in data.split(IAC):
             if command.startswith(SB + NAWS):
                 player.win_h, player.win_w = unpack('HH', command[6:1:-1])
+                player.win_resized = True
                 renderable.dirty = 1
                 self.log(f'w={player.win_w}, h={player.win_h}')
 
@@ -66,7 +67,6 @@ class PlayerSystem(System):
 
         for e, (_, player) in self.get_components(Connect, Player):
             self.log('+', player.id)
-            player.send(cls())
             self.remove_component(e, Connect)
 
 class RenderSystem(System):
@@ -87,30 +87,17 @@ class RenderSystem(System):
         for ed, (player, pos) in self.get_components(Player, Renderable):
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
-                if t.dirty:
+                if player.win_resized:
+                    player.send(cls())
                     for x in range(player.win_w):
                         for y in range(player.win_h):
                             player.write(color_bg(t.get(x,y)))
                             player.write(mv_cursor(x,y,' '))
                 player.write(color(SC.RESET))
-                t.dirty = False
+                player.win_resized = False
 
             for es, (obj,) in self.get_components(Renderable):
-
-                t = time()
-
-                if obj.fg_animation and (t - obj.fg_animation_time > 1 / obj.fg_animation_speed):
-                    animation_length = len(obj.fg_animation)
-                    current_animation_idx = obj.fg_animation.find(obj.fg_char)
-                    obj.fg_char = obj.fg_animation[(current_animation_idx+1) % animation_length]
-                    obj.fg_animation_time = t
-
-                if obj.bg_animation and (t - obj.bg_animation_time > 1 / obj.bg_animation_speed):
-                    animation_length = len(obj.bg_animation)
-                    current_animation_idx = obj.bg_animation.find(obj.bg_char)
-                    obj.bg_char = obj.bg_animation[(current_animation_idx+1) % animation_length]
-                    obj.bg_animation_time = t
-
+                self.animate(obj)
 
                 if not obj.dirty:
                     continue
@@ -146,6 +133,21 @@ class RenderSystem(System):
 
             player.write(mv_cursor())
             player.flush()
+
+    def animate(self, obj):
+        t = time()
+
+        if obj.fg_animation and (t - obj.fg_animation_time > 1 / obj.fg_animation_speed):
+            animation_length = len(obj.fg_animation)
+            current_animation_idx = obj.fg_animation.find(obj.fg_char)
+            obj.fg_char = obj.fg_animation[(current_animation_idx+1) % animation_length]
+            obj.fg_animation_time = t
+
+        if obj.bg_animation and (t - obj.bg_animation_time > 1 / obj.bg_animation_speed):
+            animation_length = len(obj.bg_animation)
+            current_animation_idx = obj.bg_animation.find(obj.bg_char)
+            obj.bg_char = obj.bg_animation[(current_animation_idx+1) % animation_length]
+            obj.bg_animation_time = t
 
     def process(self):
         self.update_render_tree()

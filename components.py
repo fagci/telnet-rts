@@ -6,6 +6,8 @@ class Player:
     win_w: int = 80
     win_h : int = 24
 
+    win_resized: bool = True
+
     __ID: int = 0
     __buffer: list = []
     

@@ -12,8 +12,8 @@ world = World()
 
 
 def main():
-    world.add_processor(TelnetSystem())
     world.add_processor(PlayerSystem())
+    world.add_processor(TelnetSystem())
     world.add_processor(RenderSystem())
 
     world.create_entity(Terrain())
