@@ -91,12 +91,19 @@ class RenderSystem(System):
             for _, (r,) in self.get_components(Renderable):
                 r.dirty = True
                 
+    def update_camera(self, player, pos):
+        CAM_MARGIN = 8
+        # update camera position
+        if pos.x < player.cam_x - player.win_w/2 + CAM_MARGIN:
+            player.cam_x = int(player.win_w/2) - CAM_MARGIN + pos.x
+        if pos.x > player.cam_x + player.win_w/2 - CAM_MARGIN:
+            player.cam_x = - int(player.win_w/2) + CAM_MARGIN + pos.x
 
     def render(self):
-        CAM_MARGIN = 8
         for ed, (player, pos) in self.get_components(Player, Renderable):
-            if player.cam_x - pos.x < player.win_w / 2 - CAM_MARGIN:
-                player.cam_x = player.win_w /2 - CAM_MARGIN + pos.x
+            self.update_camera(player, pos)
+            MX = player.cam_x - int(player.win_w/2)
+            MY = player.cam_y - int(player.win_h/2)
 
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
@@ -105,7 +112,7 @@ class RenderSystem(System):
                 if player.win_resized or pos.dirty:
                     for x in range(player.win_w):
                         for y in range(player.win_h):
-                            player.write(color_bg(t.get(x,y)))
+                            player.write(color_bg(t.get(x+MX, y+MY)))
                             player.write(mv_cursor(x,y,' '))
                 player.write(color(SC.RESET))
                 player.win_resized = False
@@ -124,7 +131,7 @@ class RenderSystem(System):
                 is_player_self = ed == es and is_player
 
                 if is_player:
-                    player.write(color_bg(terrain.get(obj.ox,obj.oy)))
+                    player.write(color_bg(terrain.get(obj.ox+MX,obj.oy+MY)))
                     player.write(mv_cursor(obj.ox, obj.oy, ' '))
                 
                 if is_player_self:
@@ -135,14 +142,9 @@ class RenderSystem(System):
 
 
 
-                for x in range(x1, x2 + 1):
-                    for y in range(y1, y2 + 1):
-                        player.write(color_bg(terrain.get(x,y)))
-                        if x == x1 or x == x2 or y == y1 or y == y2:
-                            player.write(mv_cursor(x, y, obj.fg_char))
-                            player.write(color_reset())
-                        elif y > y1 and x > x1 and y < y2 and x < x2:
-                            player.write(mv_cursor(x, y, obj.bg_char))
+                player.write(color_bg(terrain.get(x,y)))
+                player.write(mv_cursor(pos.x-MX, pos.y-MY, obj.fg_char))
+                player.write(color_reset())
 
                 player.write(color_reset())
                 obj.dirty = False
@@ -151,7 +153,11 @@ class RenderSystem(System):
                 player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
                 
             player.write(mv_cursor(2, player.win_h - 5))
-            player.write(f'{player.id}: x={pos.x}, y={pos.y}')
+            player.write(f'W: {player.win_w} x {player.win_h}')
+            player.write(mv_cursor(2, player.win_h - 4))
+            player.write(f'CAM: {player.cam_x},{player.cam_y}')
+            player.write(mv_cursor(2, player.win_h - 3))
+            player.write(f'POS: {pos.x},{pos.y}')
 
             player.write(mv_cursor())
             player.flush()

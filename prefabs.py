@@ -2,7 +2,7 @@ from components import Connect, Player, Renderable
 
 def player(x, y, icon='@'):
     return [
-        Player(cam_x=x, cam_y=y),
+        Player(),
         Renderable(x,y,fg_char=icon),
         Connect()
     ]
