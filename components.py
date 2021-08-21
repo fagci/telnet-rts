@@ -5,6 +5,8 @@ class Player:
     id: int = 0
     win_w: int = 80
     win_h : int = 24
+    cam_x: int = 0
+    cam_y: int = 0
 
     win_resized: bool = True
 
