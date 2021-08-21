@@ -1,7 +1,7 @@
 from random import randrange
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 from socket import SOL_SOCKET, SO_REUSEADDR, socket
-from telnetlib import DO, DONT, ECHO, IAC, NAWS, NEW_ENVIRON, SGA, TTYPE, WILL
+from telnetlib import DO, DONT, ECHO, IAC, NAWS, NEW_ENVIRON, SB, SE, SGA, TTYPE, WILL
 from threading import Thread
 
 from esper import World
@@ -29,7 +29,6 @@ class NetworkThread(Thread):
             try:
                 data = s.recv(1024)
                 if data:
-                    print(f'data:{player_id}', data, flush=True)
                     nd = self.world.component_for_entity(player_id, NetworkData)
                     nd.q_in.put(data)
                 else:

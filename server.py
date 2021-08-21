@@ -8,7 +8,7 @@ from esper import World
 from prefabs import room, fire
 from network import NetworkThread
 from systems import (
-    InputHandleSystem,
+    TelnetSystem,
     PlayerConnectionSystem,
     RenderSystem,
 )
@@ -17,7 +17,7 @@ world = World()
 
 
 def main():
-    world.add_processor(InputHandleSystem())
+    world.add_processor(TelnetSystem())
     world.add_processor(PlayerConnectionSystem())
     world.add_processor(RenderSystem())
 

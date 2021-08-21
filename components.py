@@ -4,12 +4,24 @@ from queue import Queue
 @dataclass
 class Player:
     id: int = 0
+    win_w: int = 80
+    win_h : int = 24
+
     __ID: int = 0
+    
     def __init__(self):
         Player.__ID += 1
         self.id = self.__ID
 
+@dataclass
 class NetworkData:
+    S_CMD = 1
+    S_VAL1 = 2
+    S_VAL2 = 3
+    
+    state: int = 0
+    cmd: int = -1
+    
     def __init__(self):
         self.q_in = Queue()
         self.q_out = Queue()

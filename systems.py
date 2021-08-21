@@ -1,3 +1,4 @@
+from telnetlib import IAC, NAWS, SB
 from time import time
 
 from esper import Processor, World
@@ -25,19 +26,66 @@ class System(Processor):
     def has_component(self, e, c):
         return self.world.has_component(e, c)
 
-class InputHandleSystem(System):
+class TelnetSystem(System):
     def process(self):
-        for _, (nd, pos) in self.get_components(NetworkData, Renderable):
+        for _, (nd, player, pos) in self.get_components(NetworkData, Player, Renderable):
             while nd.has_data:
                 data = nd.recv()
                 if data == KeyCodes.UP:
                     pos.y -= 1
-                if data == KeyCodes.DOWN:
+                elif data == KeyCodes.DOWN:
                     pos.y += 1
-                if data == KeyCodes.LEFT:
+                elif data == KeyCodes.LEFT:
                     pos.x -= 1
-                if data == KeyCodes.RIGHT:
+                elif data == KeyCodes.RIGHT:
                     pos.x += 1
+                else:
+
+                    for b in data:
+                        b = int(b)
+                        if b in IAC:
+                            nd.state = NetworkData.S_CMD
+                            nd.cmd = -1
+                            print('[T] IAC')
+                            continue
+
+                        if b in SB:
+                            nd.state = NetworkData.S_CMD
+                            print('[T] SB')
+                            continue
+
+                        if nd.state == NetworkData.S_VAL1 or nd.state == NetworkData.S_VAL2:
+                            if nd.cmd in NAWS and b != 0:
+                                if nd.state == NetworkData.S_VAL1:
+                                    player.win_w = b
+                                    print('[T] win_w', player.win_w)
+                                    nd.state = NetworkData.S_VAL2
+                                    continue
+
+                                if nd.state == NetworkData.S_VAL2:
+                                    player.win_h = b
+                                    print('[T] win_h', player.win_h)
+                                    continue
+
+                            if b != 0:
+                                print(f'[T] CMD?({nd.cmd})=', b)
+                                nd.state = 0
+                                nd.cmd = -1
+
+                            continue
+
+                        if nd.state == NetworkData.S_CMD:
+                            nd.cmd = b
+                            print('[T] CMD', b)
+                            nd.state = NetworkData.S_VAL1
+                            continue
+
+
+
+                        print('[T] ?', b)
+
+
+
 
 class PlayerConnectionSystem(System):
     def process(self):
