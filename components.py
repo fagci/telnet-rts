@@ -37,21 +37,11 @@ class NetworkData:
         return not self.q_in.empty()
 
 class Dirtyable:
-    _dirty: bool = True
+    dirty: bool = True
     def __setattr__(self, name, value):
-        if name != '_dirty':
-            self._dirty = True
+        if name != 'dirty':
+            self.dirty = True
         super(Dirtyable, self).__setattr__(name, value)
-
-    def set_pristine(self):
-        self._dirty = False
-
-    def set_dirty(self):
-        self._dirty = True
-
-    @property
-    def is_dirty(self):
-        return self._dirty
 
 @dataclass
 class Renderable(Dirtyable):

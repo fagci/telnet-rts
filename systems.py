@@ -4,7 +4,7 @@ from time import time
 from esper import Processor, World
 
 from components import Connect, Disconnect, NetworkData, Player, Renderable, Terrain
-from styles import BC, C, SC, cls, color, color_bg, color_fg, mv_cursor
+from styles import SC, cls, color, color_bg, color_fg, mv_cursor, color_reset
 
 from struct import unpack
 
@@ -33,7 +33,7 @@ class TelnetSystem(System):
         for command in data.split(IAC):
             if command.startswith(SB + NAWS):
                 player.win_h, player.win_w = unpack('HH', command[6:1:-1])
-                renderable.set_dirty()
+                renderable.dirty = 1
                 print(f'[T] w={player.win_w}, h={player.win_h}')
 
 
@@ -70,12 +70,12 @@ class RenderSystem(System):
         # TODO: hierarchy update
         has_updates = False
         for _, (r,) in self.get_components(Renderable):
-            if r.is_dirty:
+            if r.dirty:
                 has_updates = True
                 break
         if has_updates:
             for _, (r,) in self.get_components(Renderable):
-                r.set_dirty()
+                r.dirty = True
                 
 
     def render(self):
@@ -85,13 +85,13 @@ class RenderSystem(System):
 
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
-                if t.is_dirty:
+                if t.dirty:
                     for x in range(player.win_w):
                         for y in range(player.win_h):
                             append(color_bg(t.get(x,y)))
                             append(mv_cursor(x,y,' '))
                 append(color(SC.RESET))
-                t.set_pristine()
+                t.dirty = False
 
             for es, (obj,) in self.get_components(Renderable):
 
@@ -110,7 +110,7 @@ class RenderSystem(System):
                     obj.bg_animation_time = t
 
 
-                if not obj.is_dirty:
+                if not obj.dirty:
                     continue
 
                 x1, x2 = obj.x, obj.x + obj.w
@@ -128,12 +128,12 @@ class RenderSystem(System):
                         append(color_bg(terrain.get(x,y)))
                         if x == x1 or x == x2 or y == y1 or y == y2:
                             append(mv_cursor(x, y, obj.fg_char))
-                            append(color(SC.RESET))
+                            append(color_reset())
                         elif y > y1 and x > x1 and y < y2 and x < x2:
                             append(mv_cursor(x, y, obj.bg_char))
 
-                append(color(SC.RESET))
-                obj.set_pristine()
+                append(color_reset())
+                obj.dirty = False
 
             append(mv_cursor(0, 20))
             append(f'{player.id}: x={pos.x}, y={pos.y}')

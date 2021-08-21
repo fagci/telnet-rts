@@ -39,3 +39,6 @@ def color_bg(c):
 
 def color(c):
     return f'\033[{c}m'
+
+def color_reset():
+    return '\033[0m'
