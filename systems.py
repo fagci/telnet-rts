@@ -152,21 +152,23 @@ class RenderSystem(System):
                 player.write(color_bg(terrain.get(pos.x, pos.y)))
                 player.write(mv_cursor(pos.x-MX, pos.y-MY, obj.fg_char))
 
-                player.write(color_reset())
+                # player.write(color_reset())
                 obj.dirty = False
 
-            if pos.dirty:
-                for i in range(player.win_h - 5, player.win_h - 1):
-                    player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
-                
-                player.write(mv_cursor(2, player.win_h - 5))
-                player.write(f'W: {player.win_w} x {player.win_h}')
-                player.write(mv_cursor(2, player.win_h - 4))
-                player.write(f'CAM: {player.cam_x},{player.cam_y}')
-                player.write(mv_cursor(2, player.win_h - 3))
-                player.write(f'POS: {pos.x},{pos.y}')
+            player.write(color_reset())
+            for i in range(player.win_h - 5, player.win_h - 1):
+                player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
+            
+            player.write(mv_cursor(2, player.win_h - 5))
+            player.write(f'W: {player.win_w} x {player.win_h}')
+            player.write(mv_cursor(2, player.win_h - 4))
+            player.write(f'CAM: {player.cam_x},{player.cam_y}')
+            player.write(mv_cursor(2, player.win_h - 3))
+            player.write(f'POS: {pos.x},{pos.y}')
+            player.write(color_bg(terrain.get(pos.x, pos.y)))
+            player.write(mv_cursor(2, player.win_h - 2, '    '))
 
-                player.write(mv_cursor())
+            player.write(mv_cursor())
             player.flush()
 
     def animate(self, obj):
