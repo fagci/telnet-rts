@@ -78,20 +78,6 @@ class PlayerSystem(System):
             self.remove_component(e, Connect)
 
 class RenderSystem(System):
-
-    def update_render_tree(self):
-        # TODO: hierarchy update
-        pass
-        # has_updates = False
-        # for _, (r,) in self.get_components(Renderable):
-        #     if r.dirty:
-        #         has_updates = True
-        #         break
-
-        # if has_updates:
-        #     for _, (r,) in self.get_components(Renderable):
-        #         r.dirty = True
-                
     def update_camera(self, player, pos):
         CAM_MARGIN = 8
         W2 = int(player.win_w / 2)
@@ -113,30 +99,34 @@ class RenderSystem(System):
 
     def render(self):
         for ed, (player, pos) in self.get_components(Player, Renderable):
+            if player.win_resized:
+                player.write(cls())
+
             self.update_camera(player, pos)
+
             MX = player.cam_x - int(player.win_w/2)
             MY = player.cam_y - int(player.win_h/2)
 
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
-                if player.win_resized:
-                    player.send(cls())
+
                 last_c = None
+
                 if player.win_resized or player.cam_dirty:
-                    for x in range(player.win_w):
-                        for y in range(player.win_h):
+                    player.write(mv_cursor())
+                    for y in range(player.win_h):
+                        for x in range(player.win_w):
                             c = t.get(x+MX, y+MY)
                             if c != last_c:
                                 player.write(color_bg(c))
                                 last_c = c
-                            player.write(mv_cursor(x,y,' '))
+                            player.write(' ')
 
-                player.write(color(SC.RESET))
                 player.win_resized = False
                 player.cam_dirty = False
 
             for es, (obj,) in self.get_components(Renderable):
-                self.animate(obj)
+                # self.animate(obj)
 
                 if not obj.dirty:
                     continue
@@ -158,7 +148,6 @@ class RenderSystem(System):
 
                 player.write(color_bg(terrain.get(pos.x, pos.y)))
                 player.write(mv_cursor(pos.x-MX, pos.y-MY, obj.fg_char))
-                player.write(color_reset())
 
                 player.write(color_reset())
                 obj.dirty = False
@@ -192,5 +181,4 @@ class RenderSystem(System):
             obj.bg_animation_time = t
 
     def process(self):
-        self.update_render_tree()
         self.render()
