@@ -131,6 +131,7 @@ class RenderSystem(System):
                 if not obj.dirty:
                     continue
 
+
                 is_player = self.has_component(es, Player)
                 is_player_self = ed == es and is_player
 
@@ -152,17 +153,18 @@ class RenderSystem(System):
                 player.write(color_reset())
                 obj.dirty = False
 
-            for i in range(player.win_h - 5, player.win_h - 1):
-                player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
+            if pos.dirty:
+                for i in range(player.win_h - 5, player.win_h - 1):
+                    player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
                 
-            player.write(mv_cursor(2, player.win_h - 5))
-            player.write(f'W: {player.win_w} x {player.win_h}')
-            player.write(mv_cursor(2, player.win_h - 4))
-            player.write(f'CAM: {player.cam_x},{player.cam_y}')
-            player.write(mv_cursor(2, player.win_h - 3))
-            player.write(f'POS: {pos.x},{pos.y}')
+                player.write(mv_cursor(2, player.win_h - 5))
+                player.write(f'W: {player.win_w} x {player.win_h}')
+                player.write(mv_cursor(2, player.win_h - 4))
+                player.write(f'CAM: {player.cam_x},{player.cam_y}')
+                player.write(mv_cursor(2, player.win_h - 3))
+                player.write(f'POS: {pos.x},{pos.y}')
 
-            player.write(mv_cursor())
+                player.write(mv_cursor())
             player.flush()
 
     def animate(self, obj):

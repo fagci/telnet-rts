@@ -25,6 +25,7 @@ class Player:
 
     def flush(self):
         if len(self.__buffer):
+            print(repr(''.join(self.__buffer)))
             self.q_out.put(''.join(self.__buffer))
             self.__buffer.clear()
 
