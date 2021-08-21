@@ -29,13 +29,21 @@ def mv_cursor(x=0, y=0, text=''):
     if x < 0 or y < 0:
         return ''
     if x == 0:
-        return f'\033[{y+1};H{text}'
+        return f'\033[{y+1}H{text}'
     if y == 0:
         return f'\033[;{x+1}H{text}'
     return f'\033[{y+1};{x+1}H{text}'
 
 def cls():
     return '\033[2J'
+
+
+def show_cursor():
+    return '\033[?25h'
+
+
+def hide_cursor():
+    return '\033[?25l'
 
 def color_fg(c):
     return f'\033[38;5;{c}m'

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 from queue import Queue
 
 class Player:
@@ -25,7 +26,6 @@ class Player:
 
     def flush(self):
         if len(self.__buffer):
-            print(repr(''.join(self.__buffer)))
             self.q_out.put(''.join(self.__buffer))
             self.__buffer.clear()
 
@@ -81,6 +81,7 @@ class Terrain(Dirtyable):
         self.noise = OpenSimplex()
 
 
+    @lru_cache(1024)
     def get(self, x, y):
         v = (self.noise.noise2d(x*self.SCALE, y*self.SCALE)+1)/2
 

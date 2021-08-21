@@ -4,7 +4,7 @@ from time import time
 from esper import Processor, World
 
 from components import Connect, Disconnect, Player, Renderable, Terrain
-from styles import SC, bold, cls, color, color_bg, color_fg, mv_cursor, color_reset
+from styles import SC, bold, cls, color, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
 
 from struct import unpack
 
@@ -70,11 +70,13 @@ class PlayerSystem(System):
         for e, (_, player) in self.get_components(Disconnect, Player):
             self.log('-', player.id)
             # FIXME: render before leave
+            player.send(show_cursor())
             self.remove_component(e, Disconnect)
             self.delete_entity(e)
 
         for e, (_, player) in self.get_components(Connect, Player):
             self.log('+', player.id)
+            player.write(hide_cursor())
             self.remove_component(e, Connect)
 
 class RenderSystem(System):
