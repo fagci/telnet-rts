@@ -24,27 +24,24 @@ class NetworkThread(Thread):
 
 
     def communicate(self, s:socket, mask):
-        addr, player_id = self.connections[s]
+        addr, player_id, player = self.connections[s]
 
         if mask & EVENT_READ:
             try:
                 data = s.recv(1024)
                 if data:
-                    nd = self.world.component_for_entity(player_id, Player)
-                    nd.q_in.put(data)
+                    player.q_in.put(data)
                 else:
                     self.__delete_player(player_id, s)
-            except BlockingIOError as e:
-                print(repr(e))
             except Exception as ex:
-                print(ex)
+                print(repr(ex))
 
         if mask & EVENT_WRITE:
-            nd = self.world.component_for_entity(player_id, Player)
-            while not nd.q_out.empty():
+            while not player.q_out.empty():
                 try:
-                    s.send(nd.q_out.get().encode())
-                except:
+                    s.send(player.q_out.get().encode())
+                except Exception as ex:
+                    print(repr(ex))
                     self.__delete_player(player_id, s)
 
 
@@ -72,8 +69,9 @@ class NetworkThread(Thread):
 
     def __create_player(self, connection, addr):
         player_id = self.world.create_entity(*prefabs.player(1+randrange(19), 1+randrange(19)))
-        self.connections[connection] = (addr, player_id)
         self.sel.register(connection, EVENT_READ | EVENT_WRITE, self.communicate)
+        player = self.world.component_for_entity(player_id, Player)
+        self.connections[connection] = (addr, player_id, player)
         return player_id
 
 
