@@ -46,12 +46,20 @@ class TelnetSystem(System):
             while player.has_data:
                 data = player.recv()
                 if data == KeyCodes.UP:
+                    renderable.ox = renderable.x
+                    renderable.oy = renderable.y
                     renderable.y -= 1
                 elif data == KeyCodes.DOWN:
+                    renderable.ox = renderable.x
+                    renderable.oy = renderable.y
                     renderable.y += 1
                 elif data == KeyCodes.LEFT:
+                    renderable.ox = renderable.x
+                    renderable.oy = renderable.y
                     renderable.x -= 1
                 elif data == KeyCodes.RIGHT:
+                    renderable.ox = renderable.x
+                    renderable.oy = renderable.y
                     renderable.x += 1
                 else:
                     self.process_cmd(player, renderable, data)
@@ -106,12 +114,20 @@ class RenderSystem(System):
                 y1, y2 = obj.y, obj.y + obj.h
 
                 # player.write(color_bg(obj.bg_color))
-                is_player_self = ed == es and self.has_component(es, Player)
+                is_player = self.has_component(es, Player)
+                is_player_self = ed == es and is_player
+
+                if is_player:
+                    player.write(color_bg(terrain.get(obj.ox,obj.oy)))
+                    player.write(mv_cursor(obj.ox, obj.oy, ' '))
+                
                 if is_player_self:
                     player.write(color_fg(5))
                     player.write(bold())
                 else:
                     player.write(color_fg(obj.fg_color))
+
+
 
                 for x in range(x1, x2 + 1):
                     for y in range(y1, y2 + 1):

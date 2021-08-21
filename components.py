@@ -48,6 +48,8 @@ class Dirtyable:
 class Renderable(Dirtyable):
     x: int
     y: int
+    ox: int = 0
+    oy: int = 0
     w: int = 0
     h: int = 0
     fg_char: str = 'X'
@@ -66,14 +68,18 @@ class Renderable(Dirtyable):
 
 class Terrain(Dirtyable):
     SCALE = 0.01
+    
+
     def __init__(self):
         from opensimplex import OpenSimplex
         from random import seed
         seed(0)
         self.noise = OpenSimplex()
+
+
     def get(self, x, y):
-        b = 7
         v = (self.noise.noise2d(x*self.SCALE, y*self.SCALE)+1)/2
+
         if v > 0.85:
             b = 7
         elif v > 0.7:
@@ -86,6 +92,7 @@ class Terrain(Dirtyable):
             b = 222
         else:
             b = 31
+
         return b
 
 
