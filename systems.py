@@ -123,6 +123,7 @@ class RenderSystem(System):
                                 player.write(color_bg(c))
                                 last_c = c
                             player.write(' ')
+                    player.flush()
 
                 player.win_resized = False
                 player.cam_dirty = False
