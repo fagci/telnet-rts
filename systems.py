@@ -81,23 +81,35 @@ class RenderSystem(System):
 
     def update_render_tree(self):
         # TODO: hierarchy update
-        has_updates = False
-        for _, (r,) in self.get_components(Renderable):
-            if r.dirty:
-                has_updates = True
-                break
+        pass
+        # has_updates = False
+        # for _, (r,) in self.get_components(Renderable):
+        #     if r.dirty:
+        #         has_updates = True
+        #         break
 
-        if has_updates:
-            for _, (r,) in self.get_components(Renderable):
-                r.dirty = True
+        # if has_updates:
+        #     for _, (r,) in self.get_components(Renderable):
+        #         r.dirty = True
                 
     def update_camera(self, player, pos):
         CAM_MARGIN = 8
-        # update camera position
-        if pos.x < player.cam_x - player.win_w/2 + CAM_MARGIN:
-            player.cam_x = int(player.win_w/2) - CAM_MARGIN + pos.x
-        if pos.x > player.cam_x + player.win_w/2 - CAM_MARGIN:
-            player.cam_x = - int(player.win_w/2) + CAM_MARGIN + pos.x
+        W2 = int(player.win_w / 2)
+        H2 = int(player.win_h / 2)
+
+        if pos.x < player.cam_x - W2 + CAM_MARGIN:
+            player.cam_x = W2 - CAM_MARGIN + pos.x
+            player.cam_dirty = True
+        elif pos.x > player.cam_x + W2 - CAM_MARGIN:
+            player.cam_x = - W2 + CAM_MARGIN + pos.x
+            player.cam_dirty = True
+
+        if pos.y < player.cam_y - H2 + CAM_MARGIN:
+            player.cam_y = H2 - CAM_MARGIN + pos.y
+            player.cam_dirty = True
+        elif pos.y > player.cam_y + H2 - CAM_MARGIN:
+            player.cam_y = - H2 + CAM_MARGIN + pos.y
+            player.cam_dirty = True
 
     def render(self):
         for ed, (player, pos) in self.get_components(Player, Renderable):
@@ -109,13 +121,19 @@ class RenderSystem(System):
                 terrain = t
                 if player.win_resized:
                     player.send(cls())
-                if player.win_resized or pos.dirty:
+                last_c = None
+                if player.win_resized or player.cam_dirty:
                     for x in range(player.win_w):
                         for y in range(player.win_h):
-                            player.write(color_bg(t.get(x+MX, y+MY)))
+                            c = t.get(x+MX, y+MY)
+                            if c != last_c:
+                                player.write(color_bg(c))
+                                last_c = c
                             player.write(mv_cursor(x,y,' '))
+
                 player.write(color(SC.RESET))
                 player.win_resized = False
+                player.cam_dirty = False
 
             for es, (obj,) in self.get_components(Renderable):
                 self.animate(obj)
@@ -123,16 +141,12 @@ class RenderSystem(System):
                 if not obj.dirty:
                     continue
 
-                x1, x2 = obj.x, obj.x + obj.w
-                y1, y2 = obj.y, obj.y + obj.h
-
-                # player.write(color_bg(obj.bg_color))
                 is_player = self.has_component(es, Player)
                 is_player_self = ed == es and is_player
 
                 if is_player:
-                    player.write(color_bg(terrain.get(obj.ox+MX,obj.oy+MY)))
-                    player.write(mv_cursor(obj.ox, obj.oy, ' '))
+                    player.write(color_bg(terrain.get(obj.ox,obj.oy)))
+                    player.write(mv_cursor(obj.ox-MX, obj.oy-MY, ' '))
                 
                 if is_player_self:
                     player.write(color_fg(5))
@@ -142,7 +156,7 @@ class RenderSystem(System):
 
 
 
-                player.write(color_bg(terrain.get(x,y)))
+                player.write(color_bg(terrain.get(pos.x, pos.y)))
                 player.write(mv_cursor(pos.x-MX, pos.y-MY, obj.fg_char))
                 player.write(color_reset())
 

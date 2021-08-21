@@ -7,6 +7,7 @@ class Player:
     win_h : int = 24
     cam_x: int = 0
     cam_y: int = 0
+    cam_dirty: bool = True
 
     win_resized: bool = True
 
