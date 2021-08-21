@@ -1,22 +1,27 @@
 from dataclasses import dataclass
 from queue import Queue
 
-@dataclass
 class Player:
     id: int = 0
     win_w: int = 80
     win_h : int = 24
 
-    state: int = 0
-    cmd: int = -1
-
     __ID: int = 0
+    __buffer: list = []
     
     def __init__(self):
         Player.__ID += 1
         self.id = self.__ID
         self.q_in = Queue()
         self.q_out = Queue()
+
+    def write(self, data):
+        self.__buffer.append(data)
+
+    def flush(self):
+        if len(self.__buffer):
+            self.q_out.put(''.join(self.__buffer))
+            self.__buffer.clear()
 
     def send(self, data):
         self.q_out.put(data)

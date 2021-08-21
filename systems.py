@@ -85,17 +85,14 @@ class RenderSystem(System):
 
     def render(self):
         for ed, (player, pos) in self.get_components(Player, Renderable):
-            output = []
-            append = output.append
-
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
                 if t.dirty:
                     for x in range(player.win_w):
                         for y in range(player.win_h):
-                            append(color_bg(t.get(x,y)))
-                            append(mv_cursor(x,y,' '))
-                append(color(SC.RESET))
+                            player.write(color_bg(t.get(x,y)))
+                            player.write(mv_cursor(x,y,' '))
+                player.write(color(SC.RESET))
                 t.dirty = False
 
             for es, (obj,) in self.get_components(Renderable):
@@ -121,34 +118,34 @@ class RenderSystem(System):
                 x1, x2 = obj.x, obj.x + obj.w
                 y1, y2 = obj.y, obj.y + obj.h
 
-                # append(color_bg(obj.bg_color))
+                # player.write(color_bg(obj.bg_color))
                 is_player_self = ed == es and self.has_component(es, Player)
                 if is_player_self:
-                    append(color_fg(5))
-                    append(bold())
+                    player.write(color_fg(5))
+                    player.write(bold())
                 else:
-                    append(color_fg(obj.fg_color))
+                    player.write(color_fg(obj.fg_color))
 
                 for x in range(x1, x2 + 1):
                     for y in range(y1, y2 + 1):
-                        append(color_bg(terrain.get(x,y)))
+                        player.write(color_bg(terrain.get(x,y)))
                         if x == x1 or x == x2 or y == y1 or y == y2:
-                            append(mv_cursor(x, y, obj.fg_char))
-                            append(color_reset())
+                            player.write(mv_cursor(x, y, obj.fg_char))
+                            player.write(color_reset())
                         elif y > y1 and x > x1 and y < y2 and x < x2:
-                            append(mv_cursor(x, y, obj.bg_char))
+                            player.write(mv_cursor(x, y, obj.bg_char))
 
-                append(color_reset())
+                player.write(color_reset())
                 obj.dirty = False
 
             for i in range(player.win_h - 5, player.win_h - 1):
-                append(mv_cursor(1, i, ' '* (player.win_w - 2)))
+                player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
                 
-            append(mv_cursor(2, player.win_h - 5))
-            append(f'{player.id}: x={pos.x}, y={pos.y}')
+            player.write(mv_cursor(2, player.win_h - 5))
+            player.write(f'{player.id}: x={pos.x}, y={pos.y}')
 
-            append(mv_cursor())
-            player.send(''.join(output))
+            player.write(mv_cursor())
+            player.flush()
 
     def process(self):
         self.update_render_tree()
