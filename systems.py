@@ -1,4 +1,4 @@
-from telnetlib import IAC, NAWS, SB
+from telnetlib import IAC, NAWS, SB, WILL
 from time import time
 
 from esper import Processor, World
@@ -46,16 +46,14 @@ class TelnetSystem(System):
                         if b in IAC:
                             nd.state = NetworkData.S_CMD
                             nd.cmd = -1
-                            print('[T] IAC')
                             continue
 
                         if b in SB:
                             nd.state = NetworkData.S_CMD
-                            print('[T] SB')
                             continue
 
                         if nd.state == NetworkData.S_VAL1 or nd.state == NetworkData.S_VAL2:
-                            if nd.cmd in NAWS and b != 0:
+                            if b != 0:
                                 if nd.state == NetworkData.S_VAL1:
                                     player.win_w = b
                                     print('[T] win_w', player.win_w)
@@ -75,14 +73,14 @@ class TelnetSystem(System):
                             continue
 
                         if nd.state == NetworkData.S_CMD:
-                            nd.cmd = b
-                            print('[T] CMD', b)
-                            nd.state = NetworkData.S_VAL1
-                            continue
+                            if b in NAWS:
+                                nd.cmd = b
+                                nd.state = NetworkData.S_VAL1
+                                continue
 
+                            # print('[T] CMD unsupported:', b)
 
-
-                        print('[T] ?', b)
+                        nd.state = 0
 
 
 
