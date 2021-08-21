@@ -86,17 +86,23 @@ class RenderSystem(System):
             if r.dirty:
                 has_updates = True
                 break
+
         if has_updates:
             for _, (r,) in self.get_components(Renderable):
                 r.dirty = True
                 
 
     def render(self):
+        CAM_MARGIN = 8
         for ed, (player, pos) in self.get_components(Player, Renderable):
+            if player.cam_x - pos.x < player.win_w / 2 - CAM_MARGIN:
+                player.cam_x = player.win_w /2 - CAM_MARGIN + pos.x
+
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
                 if player.win_resized:
                     player.send(cls())
+                if player.win_resized or pos.dirty:
                     for x in range(player.win_w):
                         for y in range(player.win_h):
                             player.write(color_bg(t.get(x,y)))
