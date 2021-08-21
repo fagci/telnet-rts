@@ -6,6 +6,8 @@ from esper import Processor, World
 from components import Connect, Disconnect, NetworkData, Player, Renderable, Terrain
 from styles import BC, C, SC, cls, color, color_bg, color_fg, mv_cursor
 
+from struct import unpack
+
 class KeyCodes:
     UP = b'\x1b[A'
     RIGHT = b'\x1b[C'
@@ -27,62 +29,28 @@ class System(Processor):
         return self.world.has_component(e, c)
 
 class TelnetSystem(System):
+    def process_cmd(self, player, renderable, data):
+        for command in data.split(IAC):
+            if command.startswith(SB + NAWS):
+                player.win_h, player.win_w = unpack('HH', command[6:1:-1])
+                renderable.set_dirty()
+                print(f'[T] w={player.win_w}, h={player.win_h}')
+
+
     def process(self):
-        for _, (nd, player, pos) in self.get_components(NetworkData, Player, Renderable):
+        for _, (nd, player, renderable) in self.get_components(NetworkData, Player, Renderable):
             while nd.has_data:
                 data = nd.recv()
                 if data == KeyCodes.UP:
-                    pos.y -= 1
+                    renderable.y -= 1
                 elif data == KeyCodes.DOWN:
-                    pos.y += 1
+                    renderable.y += 1
                 elif data == KeyCodes.LEFT:
-                    pos.x -= 1
+                    renderable.x -= 1
                 elif data == KeyCodes.RIGHT:
-                    pos.x += 1
+                    renderable.x += 1
                 else:
-
-                    for b in data:
-                        b = int(b)
-                        if b in IAC:
-                            nd.state = NetworkData.S_CMD
-                            nd.cmd = -1
-                            continue
-
-                        if b in SB:
-                            nd.state = NetworkData.S_CMD
-                            continue
-
-                        if nd.state == NetworkData.S_VAL1 or nd.state == NetworkData.S_VAL2:
-                            if b != 0:
-                                if nd.state == NetworkData.S_VAL1:
-                                    player.win_w = b
-                                    print('[T] win_w', player.win_w)
-                                    nd.state = NetworkData.S_VAL2
-                                    continue
-
-                                if nd.state == NetworkData.S_VAL2:
-                                    player.win_h = b
-                                    print('[T] win_h', player.win_h)
-                                    continue
-
-                            if b != 0:
-                                print(f'[T] CMD?({nd.cmd})=', b)
-                                nd.state = 0
-                                nd.cmd = -1
-
-                            continue
-
-                        if nd.state == NetworkData.S_CMD:
-                            if b in NAWS:
-                                nd.cmd = b
-                                nd.state = NetworkData.S_VAL1
-                                continue
-
-                            # print('[T] CMD unsupported:', b)
-
-                        nd.state = 0
-
-
+                    self.process_cmd(player, renderable, data)
 
 
 class PlayerConnectionSystem(System):
@@ -118,8 +86,8 @@ class RenderSystem(System):
             for e, (t,) in self.get_components(Terrain):
                 terrain = t
                 if t.is_dirty:
-                    for x in range(80):
-                        for y in range(24):
+                    for x in range(player.win_w):
+                        for y in range(player.win_h):
                             append(color_bg(t.get(x,y)))
                             append(mv_cursor(x,y,' '))
                 append(color(SC.RESET))
