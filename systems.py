@@ -4,7 +4,7 @@ from time import time
 from esper import Processor, World
 
 from components import Connect, Disconnect, NetworkData, Player, Renderable, Terrain
-from styles import SC, cls, color, color_bg, color_fg, mv_cursor, color_reset
+from styles import SC, bold, cls, color, color_bg, color_fg, mv_cursor, color_reset
 
 from struct import unpack
 
@@ -120,6 +120,7 @@ class RenderSystem(System):
                 is_player_self = ed == es and self.has_component(es, Player)
                 if is_player_self:
                     append(color_fg(5))
+                    append(bold())
                 else:
                     append(color_fg(obj.fg_color))
 
@@ -135,7 +136,10 @@ class RenderSystem(System):
                 append(color_reset())
                 obj.dirty = False
 
-            append(mv_cursor(0, 20))
+            for i in range(player.win_h - 5, player.win_h - 1):
+                append(mv_cursor(1, i, ' '* (player.win_w - 2)))
+                
+            append(mv_cursor(2, player.win_h - 5))
             append(f'{player.id}: x={pos.x}, y={pos.y}')
 
             append(mv_cursor())

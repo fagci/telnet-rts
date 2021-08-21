@@ -42,3 +42,6 @@ def color(c):
 
 def color_reset():
     return '\033[0m'
+
+def bold():
+    return '\033[1m'
