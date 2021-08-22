@@ -235,7 +235,7 @@ class RenderSystem(System):
         player.write(mv_cursor(2, player.id))
         player.write(f'Player {player.id}')
         
-        for i in range(player.win_h - 6, player.win_h - 1):
+        for i in range(player.win_h - 5, player.win_h - 1):
             player.write(mv_cursor(1, i, ' '*(player.win_w - 2)))
         
         player.write(mv_cursor(2, player.win_h - 5))
@@ -248,20 +248,24 @@ class RenderSystem(System):
         player.write(bold())
         
         player.write(color_fg(94))
-        player.write(mv_cursor(player.win_w-12, player.win_h-6))
-        player.write('F'*round(stomach.level/10))
+        player.write(mv_cursor(player.win_w-19, player.win_h-5))
+        player.write('  FOOD ')
+        player.write('●'*round(stomach.level/10))
 
         player.write(color_fg(Terrain.WATER))
-        player.write(mv_cursor(player.win_w-12, player.win_h-5))
-        player.write('~'*round(hydration.level/10))
+        player.write(mv_cursor(player.win_w-19, player.win_h-4))
+        player.write(' WATER ')
+        player.write('●'*round(hydration.level/10))
         
         player.write(color_fg(7))
-        player.write(mv_cursor(player.win_w-12, player.win_h-4))
-        player.write('◯'*round(oxygen.level/10))
+        player.write(mv_cursor(player.win_w-19, player.win_h-3))
+        player.write('OXYGEN ')
+        player.write('●'*round(oxygen.level/10))
         
         player.write(color_fg(124))
-        player.write(mv_cursor(player.win_w-12, player.win_h-3))
-        player.write('+'*round(health.level/10))
+        player.write(mv_cursor(player.win_w-19, player.win_h-2))
+        player.write('HEALTH ')
+        player.write('●'*round(health.level/10))
         player.write(color_reset())
         
 
