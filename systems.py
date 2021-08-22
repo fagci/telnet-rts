@@ -195,6 +195,9 @@ class RenderSystem(System):
         health = self.component_for_entity(ed, Health)
 
         player.write(color_reset())
+
+        player.write(mv_cursor(2, player.id))
+        player.write(f'Player {player.id}')
         
         for i in range(player.win_h - 6, player.win_h - 1):
             player.write(mv_cursor(1, i, ' '*(player.win_w - 2)))

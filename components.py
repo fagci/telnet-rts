@@ -12,19 +12,16 @@ class Player:
     cam_y: int = 0
     cam_dirty: bool = True
 
-    q_in: Queue = Queue()
-    q_out: Queue = Queue()
-
     win_resized: bool = True
 
     __ID: int = 0
-    __buffer: list = []
     
     def __init__(self):
         Player.__ID += 1
         self.id = self.__ID
         self.q_in = Queue()
         self.q_out = Queue()
+        self.__buffer = []
 
     def write(self, data):
         self.__buffer.append(data)
