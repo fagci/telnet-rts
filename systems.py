@@ -4,7 +4,7 @@ from time import time
 from esper import Processor, World
 
 from components import Connect, Disconnect, Health, Hydration, Player, Position, Renderable, Stomach, Terrain, Velocity
-from styles import bold, cls, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
+from styles import cls, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
 
 from struct import unpack
 
@@ -85,13 +85,17 @@ class HealthSystem(System):
         for e, (t,) in self.get_components(Terrain):
             for _, (pos, v, stomach, hydration, health) in self.get_components(Position, Velocity, Stomach, Hydration, Health):
                 block = t.get(pos.x, pos.y)
+
                 if block == Terrain.WATER:
                     hydration.add(1)
 
+                if block == Terrain.SNOW: # TODO: add Cold component?
+                    stomach.sub(0.01)
+
                 v_f = abs(v)
 
-                stomach.sub(0.04 if v_f else 0.01)
-                hydration.sub(0.12 if v_f else 0.04)
+                stomach.sub(0.01 if v_f else 0.0025)
+                hydration.sub(0.03 if v_f else 0.01)
                 if stomach.level == 0 or hydration.level == 0:
                     health.sub(0.2)
 
