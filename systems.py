@@ -3,8 +3,8 @@ from time import time
 
 from esper import Processor, World
 
-from components import Connect, Disconnect, Player, Renderable, Terrain
-from styles import SC, bold, cls, color, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
+from components import Connect, Disconnect, Health, Hydration, Player, Position, Renderable, Stomach, Terrain, Velocity
+from styles import bold, cls, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
 
 from struct import unpack
 
@@ -27,6 +27,10 @@ class System(Processor):
         return self.world.delete_entity(e)
     def has_component(self, e, c):
         return self.world.has_component(e, c)
+    def component_for_entity(self, e, c):
+        return self.world.component_for_entity(e, c)
+    def components_for_entity(self, e, *c):
+        return self.world.components_for_entity(e, *c)
     def log(self, *args, **kwargs):
         n = self.__class__.__name__.split('System')[0]
         print(f'[{n}]', *args, **kwargs)
@@ -37,32 +41,28 @@ class TelnetSystem(System):
             if command.startswith(SB + NAWS):
                 player.win_h, player.win_w = unpack('HH', command[6:1:-1])
                 player.win_resized = True
-                renderable.dirty = 1
+                renderable.dirty = True
                 self.log(f'w={player.win_w}, h={player.win_h}')
 
 
     def process(self):
-        for _, (player, renderable) in self.get_components(Player, Renderable):
+        for _, (player, v, r) in self.get_components(Player, Velocity, Renderable):
             while player.has_data:
                 data = player.recv()
                 if data == KeyCodes.UP:
-                    renderable.ox = renderable.x
-                    renderable.oy = renderable.y
-                    renderable.y -= 1
+                    v.y -= 1
+                    r.dirty = True
                 elif data == KeyCodes.DOWN:
-                    renderable.ox = renderable.x
-                    renderable.oy = renderable.y
-                    renderable.y += 1
+                    v.y += 1
+                    r.dirty = True
                 elif data == KeyCodes.LEFT:
-                    renderable.ox = renderable.x
-                    renderable.oy = renderable.y
-                    renderable.x -= 1
+                    v.x -= 1
+                    r.dirty = True
                 elif data == KeyCodes.RIGHT:
-                    renderable.ox = renderable.x
-                    renderable.oy = renderable.y
-                    renderable.x += 1
+                    v.x += 1
+                    r.dirty = True
                 else:
-                    self.process_cmd(player, renderable, data)
+                    self.process_cmd(player, r, data)
 
 
 class PlayerSystem(System):
@@ -78,6 +78,27 @@ class PlayerSystem(System):
             self.log('+', player.id)
             player.write(hide_cursor())
             self.remove_component(e, Connect)
+
+class HealthSystem(System):
+    def process(self):
+        for e, (t,) in self.get_components(Terrain):
+            for _, (pos,stomach,hydration, health) in self.get_components(Position, Stomach, Hydration, Health):
+                block = t.get(pos.x, pos.y)
+                if block == Terrain.WATER:
+                    hydration.add(1)
+                stomach.sub(0.01)
+                hydration.sub(0.04)
+                if stomach.level == 0 or hydration.level == 0:
+                    health.sub(0.2)
+
+class MovementSystem(System):
+    def process(self):
+        for _, (pos,v) in self.get_components(Position,Velocity):
+            pos.ox = pos.x
+            pos.oy = pos.y
+            pos += v
+            v.x = 0
+            v.y = 0
 
 class RenderSystem(System):
     def update_camera(self, player, pos):
@@ -100,11 +121,11 @@ class RenderSystem(System):
             player.cam_dirty = True
 
     def render(self):
-        for ed, (player, pos) in self.get_components(Player, Renderable):
+        for ed, (player, player_pos) in self.get_components(Player, Position):
             if player.win_resized:
                 player.write(cls())
 
-            self.update_camera(player, pos)
+            self.update_camera(player, player_pos)
 
             MX = player.cam_x - int(player.win_w/2)
             MY = player.cam_y - int(player.win_h/2)
@@ -128,10 +149,10 @@ class RenderSystem(System):
                 player.win_resized = False
                 player.cam_dirty = False
 
-            for es, (obj,) in self.get_components(Renderable):
+            for es, (pos, renderable) in self.get_components(Position, Renderable):
                 # self.animate(obj)
 
-                if not obj.dirty:
+                if not renderable.dirty:
                     continue
 
 
@@ -139,25 +160,25 @@ class RenderSystem(System):
                 is_player_self = ed == es and is_player
 
                 if is_player:
-                    player.write(color_bg(terrain.get(obj.ox,obj.oy)))
-                    player.write(mv_cursor(obj.ox-MX, obj.oy-MY, ' '))
+                    player.write(color_bg(terrain.get(pos.ox,pos.oy)))
+                    player.write(mv_cursor(pos.ox-MX, pos.oy-MY, ' '))
                 
                 if is_player_self:
                     player.write(color_fg(5))
                     player.write(bold())
                 else:
-                    player.write(color_fg(obj.fg_color))
+                    player.write(color_fg(renderable.fg_color))
 
 
 
                 player.write(color_bg(terrain.get(pos.x, pos.y)))
-                player.write(mv_cursor(pos.x-MX, pos.y-MY, obj.fg_char))
+                player.write(mv_cursor(pos.x-MX, pos.y-MY, renderable.fg_char))
 
                 # player.write(color_reset())
-                obj.dirty = False
+                renderable.dirty = False
 
             player.write(color_reset())
-            for i in range(player.win_h - 5, player.win_h - 1):
+            for i in range(player.win_h - 6, player.win_h - 1):
                 player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
             
             player.write(mv_cursor(2, player.win_h - 5))
@@ -165,9 +186,17 @@ class RenderSystem(System):
             player.write(mv_cursor(2, player.win_h - 4))
             player.write(f'CAM: {player.cam_x},{player.cam_y}')
             player.write(mv_cursor(2, player.win_h - 3))
-            player.write(f'POS: {pos.x},{pos.y}')
-            player.write(color_bg(terrain.get(pos.x, pos.y)))
-            player.write(mv_cursor(2, player.win_h - 2, '    '))
+            player.write(f'POS: {player_pos.x},{player_pos.y}')
+            stomach = self.component_for_entity(ed, Stomach)
+            hydration = self.component_for_entity(ed, Hydration)
+            health = self.component_for_entity(ed, Health)
+            player.write(mv_cursor(player.win_w-12, player.win_h-5))
+            player.write('S'*round(stomach.level/10))
+            player.write(mv_cursor(player.win_w-12, player.win_h-4))
+            player.write('H'*round(hydration.level/10))
+            player.write(mv_cursor(player.win_w-12, player.win_h-3))
+            player.write('♡'*round(health.level/10))
+            
 
             player.write(mv_cursor())
             player.flush()

@@ -1,2 +1,3 @@
 esper
+euclid
 opensimplex

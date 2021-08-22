@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from queue import Queue
 
+from euclid import Vector2
+
 class Player:
     id: int = 0
     win_w: int = 80
@@ -50,10 +52,6 @@ class Dirtyable:
 
 @dataclass
 class Renderable(Dirtyable):
-    x: int
-    y: int
-    ox: int = 0
-    oy: int = 0
     w: int = 0
     h: int = 0
     fg_char: str = 'X'
@@ -69,9 +67,18 @@ class Renderable(Dirtyable):
 
     # layer?
 
+class Position(Vector2):
+    ox: int = 0
+    oy: int = 0
+
+class Velocity(Vector2):
+    pass
+
 
 class Terrain(Dirtyable):
     SCALE = 0.01
+
+    WATER = 31
     
 
     def __init__(self):
@@ -96,7 +103,7 @@ class Terrain(Dirtyable):
         elif v > 0.15:
             b = 222
         else:
-            b = 31
+            b = Terrain.WATER
 
         return b
 
@@ -106,5 +113,28 @@ class Connect:
 
 
 class Disconnect:
+    pass
+
+@dataclass
+class Level:
+    level: float = 100.0
+    def sub(self, v):
+        if self.level > 0:
+            self.level -= v
+        if self.level < 0:
+            self.level = 0
+    def add(self, v):
+        if self.level < 100:
+            self.level += v
+        if self.level > 100:
+            self.level = 100
+
+class Health(Level):
+    pass
+
+class Stomach(Level):
+    pass
+
+class Hydration(Level):
     pass
 

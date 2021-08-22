@@ -6,7 +6,7 @@ from esper import World
 
 from components import Renderable, Terrain
 from network import NetworkThread
-from systems import PlayerSystem, RenderSystem, TelnetSystem
+from systems import HealthSystem, MovementSystem, PlayerSystem, RenderSystem, TelnetSystem
 
 world = World()
 
@@ -14,6 +14,8 @@ world = World()
 def main():
     world.add_processor(PlayerSystem())
     world.add_processor(TelnetSystem())
+    world.add_processor(HealthSystem())
+    world.add_processor(MovementSystem())
     world.add_processor(RenderSystem())
 
     world.create_entity(Terrain())
