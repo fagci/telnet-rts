@@ -5,18 +5,18 @@ from queue import Queue
 from euclid import Vector2
 
 class Player:
-    id: int = 0
-    win_w: int = 80
-    win_h : int = 24
-    cam_x: int = 0
-    cam_y: int = 0
-    cam_dirty: bool = True
-
-    win_resized: bool = True
 
     __ID: int = 0
     
     def __init__(self):
+        self.win_w = 80
+        self.win_h  = 24
+        self.cam_x = 0
+        self.cam_y = 0
+        self.cam_dirty = True
+
+        self.win_resized = True
+
         Player.__ID += 1
         self.id = self.__ID
         self.q_in = Queue()
@@ -43,7 +43,9 @@ class Player:
 
 
 class Dirtyable:
-    dirty: bool = True
+    def __init__(self):
+        self.dirty = True
+
     def __setattr__(self, name, value):
         if name != 'dirty':
             self.dirty = True
@@ -68,8 +70,10 @@ class Renderable(Dirtyable):
     # layer?
 
 class Position(Vector2):
-    ox: int = 0
-    oy: int = 0
+    def __init__(self, x, y):
+        super().__init__(x=x, y=y)
+        self.ox = 0
+        self.oy = 0
 
 class Velocity(Vector2):
     pass

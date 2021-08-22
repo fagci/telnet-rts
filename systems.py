@@ -147,13 +147,13 @@ class RenderSystem(System):
         for ed, (player, player_pos) in self.get_components(Player, Position):
             if player.win_resized:
                 player.write(cls())
+                player.cam_x = player_pos.x
+                player.cam_y = player_pos.y
 
             self.update_camera(player, player_pos)
 
             if player.win_resized or player.cam_dirty:
                 self.draw_terrain(player)
-                player.win_resized = False
-                player.cam_dirty = False
 
         # animate renderables
         # for _, (renderable) in self.get_components(Renderable):
@@ -166,18 +166,27 @@ class RenderSystem(System):
                 if not renderable.dirty:
                     continue
 
+                ox, oy = pos.ox - self.mx, pos.oy - self.my
+                x, y = pos.x - self.mx, pos.y - self.my
+                # FIXME: another player draws wrong terrain bg
+                terrain_obg = terrain.get(pos.ox, pos.oy)
+                terrain_bg = terrain.get(pos.x, pos.y)
+
                 for player_id, (player, player_pos) in self.get_components(Player, Position):
-                    is_player = self.has_component(obj_id, Player)
+                    # draw objects only visible to player
+                    if x < 0 or y < 0 or x > player.win_w or y > player.win_h:
+                        continue
+
                     is_player_self = obj_id == player_id
 
-                    if is_player:
-                        player.write(color_bg(terrain.get(pos.ox, pos.oy)))
-                        player.write(mv_cursor(pos.ox-self.mx, pos.oy - self.my, ' '))
+                    # clear old pos with terrain color
+                    player.write(color_bg(terrain_obg))
+                    player.write(mv_cursor(ox, oy, ' '))
                     
-                    player.write(color_bg(terrain.get(pos.x, pos.y)))
+                    player.write(color_bg(terrain_bg))
                     player.write(color_fg(1 if is_player_self else renderable.fg_color))
 
-                    player.write(mv_cursor(pos.x-self.mx, pos.y-self.my, renderable.fg_char))
+                    player.write(mv_cursor(x, y, renderable.fg_char))
 
                 renderable.dirty = False
 
@@ -188,6 +197,8 @@ class RenderSystem(System):
         for ed, (player,) in self.get_components(Player):
             player.write(mv_cursor())
             player.flush()
+            player.win_resized = False
+            player.cam_dirty = False
 
     def draw_ui(self, ed, player, player_pos):
         stomach = self.component_for_entity(ed, Stomach)
