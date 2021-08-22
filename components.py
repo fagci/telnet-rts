@@ -147,3 +147,5 @@ class Stomach(Level):
 class Hydration(Level):
     pass
 
+class Oxygen(Level):
+    pass

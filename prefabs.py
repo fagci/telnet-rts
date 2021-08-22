@@ -1,4 +1,4 @@
-from components import Connect, Health, Hydration, Player, Position, Renderable, Stomach, Velocity
+from components import Connect, Health, Hydration, Oxygen, Player, Position, Renderable, Stomach, Velocity
 
 def player(x, y, icon='@'):
     return [
@@ -9,7 +9,8 @@ def player(x, y, icon='@'):
         Connect(),
         Health(),
         Stomach(),
-        Hydration()
+        Hydration(),
+        Oxygen(),
     ]
 
 def fire(x,y):

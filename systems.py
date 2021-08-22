@@ -3,7 +3,7 @@ from time import time
 
 from esper import Processor, World
 
-from components import Connect, Disconnect, Health, Hydration, Player, Position, Renderable, Stomach, Terrain, Velocity
+from components import Connect, Disconnect, Health, Hydration, Oxygen, Player, Position, Renderable, Stomach, Terrain, Velocity
 from styles import cls, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
 
 from struct import unpack
@@ -86,11 +86,14 @@ class PlayerSystem(System):
 class HealthSystem(System):
     def process(self):
         for _, (t,) in self.get_components(Terrain):
-            for _, (pos, v, stomach, hydration, health) in self.get_components(Position, Velocity, Stomach, Hydration, Health):
+            for _, (pos, v, stomach, hydration, oxygen, health) in self.get_components(Position, Velocity, Stomach, Hydration, Oxygen, Health):
                 block = t.get(pos.x, pos.y)
 
                 if block == Terrain.WATER:
                     hydration.add(1)
+                    oxygen.sub(0.5)
+                else:
+                    oxygen.add(1)
 
                 if block == Terrain.SNOW: # TODO: add Cold component?
                     stomach.sub(0.01)
@@ -101,6 +104,13 @@ class HealthSystem(System):
                 hydration.sub(0.03 if v_f else 0.01)
                 if stomach.level == 0 or hydration.level == 0:
                     health.sub(0.2)
+
+                if oxygen.level == 0:
+                    health.sub(0.5)
+
+                if health.level < 100:
+                    stomach.sub(0.1)
+                    health.add(0.1)
 
 class MovementSystem(System):
     def process(self):
@@ -210,6 +220,7 @@ class RenderSystem(System):
     def draw_ui(self, ed, player, player_pos):
         stomach = self.component_for_entity(ed, Stomach)
         hydration = self.component_for_entity(ed, Hydration)
+        oxygen = self.component_for_entity(ed, Oxygen)
         health = self.component_for_entity(ed, Health)
 
         player.write(color_reset())
@@ -227,10 +238,12 @@ class RenderSystem(System):
         player.write(mv_cursor(2, player.win_h - 3))
         player.write(f'POS: {player_pos.x},{player_pos.y}')
 
-        player.write(mv_cursor(player.win_w-12, player.win_h-5))
+        player.write(mv_cursor(player.win_w-12, player.win_h-6))
         player.write('S'*round(stomach.level/10))
-        player.write(mv_cursor(player.win_w-12, player.win_h-4))
+        player.write(mv_cursor(player.win_w-12, player.win_h-5))
         player.write('H'*round(hydration.level/10))
+        player.write(mv_cursor(player.win_w-12, player.win_h-4))
+        player.write('O'*round(oxygen.level/10))
         player.write(mv_cursor(player.win_w-12, player.win_h-3))
         player.write('♡'*round(health.level/10))
         
