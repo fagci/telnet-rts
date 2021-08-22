@@ -4,7 +4,7 @@ from time import time
 from esper import Processor, World
 
 from components import Connect, Disconnect, Health, Hydration, Oxygen, Player, Position, Renderable, Stomach, Terrain, Velocity
-from styles import cls, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
+from styles import bold, cls, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
 
 from struct import unpack
 
@@ -52,7 +52,14 @@ class TelnetSystem(System):
                 while player.has_data:
                     data = player.recv()
                     block = terrain.get(pos.x, pos.y)
-                    speed = 0.3 if block == Terrain.WATER else 1
+
+                    speed = 1
+
+                    if block == Terrain.WATER:
+                        speed = 0.3
+                    elif block == Terrain.SAND:
+                        speed = 0.7
+
                     if data == KeyCodes.UP:
                         v.y -= speed
                         r.dirty = True
@@ -238,14 +245,24 @@ class RenderSystem(System):
         player.write(mv_cursor(2, player.win_h - 3))
         player.write(f'POS: {player_pos.x},{player_pos.y}')
 
+        player.write(bold())
+        
+        player.write(color_fg(94))
         player.write(mv_cursor(player.win_w-12, player.win_h-6))
-        player.write('S'*round(stomach.level/10))
+        player.write('F'*round(stomach.level/10))
+
+        player.write(color_fg(Terrain.WATER))
         player.write(mv_cursor(player.win_w-12, player.win_h-5))
-        player.write('H'*round(hydration.level/10))
+        player.write('~'*round(hydration.level/10))
+        
+        player.write(color_fg(7))
         player.write(mv_cursor(player.win_w-12, player.win_h-4))
-        player.write('O'*round(oxygen.level/10))
+        player.write('◯'*round(oxygen.level/10))
+        
+        player.write(color_fg(124))
         player.write(mv_cursor(player.win_w-12, player.win_h-3))
-        player.write('♡'*round(health.level/10))
+        player.write('+'*round(health.level/10))
+        player.write(color_reset())
         
 
 
