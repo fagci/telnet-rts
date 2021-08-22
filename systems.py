@@ -46,24 +46,27 @@ class TelnetSystem(System):
 
 
     def process(self):
-        # TODO: check if we want to add Velocity component or keep it all time
-        for _, (player, v, r) in self.get_components(Player, Velocity, Renderable):
-            while player.has_data:
-                data = player.recv()
-                if data == KeyCodes.UP:
-                    v.y -= 1
-                    r.dirty = True
-                elif data == KeyCodes.DOWN:
-                    v.y += 1
-                    r.dirty = True
-                elif data == KeyCodes.LEFT:
-                    v.x -= 1
-                    r.dirty = True
-                elif data == KeyCodes.RIGHT:
-                    v.x += 1
-                    r.dirty = True
-                else:
-                    self.process_cmd(player, r, data)
+        for _, (terrain,) in self.get_components(Terrain):
+            # TODO: check if we want to add Velocity component or keep it all time
+            for _, (player, pos, v, r) in self.get_components(Player, Position, Velocity, Renderable):
+                while player.has_data:
+                    data = player.recv()
+                    block = terrain.get(pos.x, pos.y)
+                    speed = 0.3 if block == Terrain.WATER else 1
+                    if data == KeyCodes.UP:
+                        v.y -= speed
+                        r.dirty = True
+                    elif data == KeyCodes.DOWN:
+                        v.y += speed
+                        r.dirty = True
+                    elif data == KeyCodes.LEFT:
+                        v.x -= speed
+                        r.dirty = True
+                    elif data == KeyCodes.RIGHT:
+                        v.x += speed
+                        r.dirty = True
+                    else:
+                        self.process_cmd(player, r, data)
 
 
 class PlayerSystem(System):
@@ -82,7 +85,7 @@ class PlayerSystem(System):
 
 class HealthSystem(System):
     def process(self):
-        for e, (t,) in self.get_components(Terrain):
+        for _, (t,) in self.get_components(Terrain):
             for _, (pos, v, stomach, hydration, health) in self.get_components(Position, Velocity, Stomach, Hydration, Health):
                 block = t.get(pos.x, pos.y)
 

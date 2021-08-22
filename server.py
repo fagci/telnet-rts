@@ -19,7 +19,7 @@ def main():
     world.add_processor(RenderSystem())
 
     world.create_entity(Terrain())
-    world.create_entity(Renderable(0,0,fg_char='+'))
+    world.create_entity(Renderable(0,0,fg_char='*'))
 
     network_thread = NetworkThread(world, '0.0.0.0')
     network_thread.setDaemon(True)

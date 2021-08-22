@@ -26,6 +26,8 @@ class SC:
 
 
 def mv_cursor(x=0, y=0, text=''):
+    x = round(x)
+    y = round(y)
     if x < 0 or y < 0:
         return ''
     if x == 0:
