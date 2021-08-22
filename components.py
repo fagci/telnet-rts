@@ -12,6 +12,9 @@ class Player:
     cam_y: int = 0
     cam_dirty: bool = True
 
+    q_in: Queue = Queue()
+    q_out: Queue = Queue()
+
     win_resized: bool = True
 
     __ID: int = 0
@@ -79,6 +82,11 @@ class Terrain(Dirtyable):
     SCALE = 0.01
 
     WATER = 31
+    SAND = 222
+    GRASS = 22
+    GRASS_LIGHT = 70
+    ROCK = 240
+    SNOW = 7
     
 
     def __init__(self):
@@ -90,18 +98,18 @@ class Terrain(Dirtyable):
 
     @lru_cache(1024)
     def get(self, x, y):
-        v = (self.noise.noise2d(x*self.SCALE, y*self.SCALE)+1)/2
+        v = (self.noise.noise2d(x*self.SCALE, y*self.SCALE) + 1)/2
 
         if v > 0.85:
-            b = 7
+            b = Terrain.SNOW
         elif v > 0.7:
-            b = 240
+            b = Terrain.ROCK
         elif v > 0.45:
-            b = 70
+            b = Terrain.GRASS_LIGHT
         elif v > 0.18:
-            b = 22
+            b = Terrain.GRASS
         elif v > 0.15:
-            b = 222
+            b = Terrain.SAND
         else:
             b = Terrain.WATER
 
