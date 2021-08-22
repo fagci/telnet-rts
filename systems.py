@@ -46,6 +46,7 @@ class TelnetSystem(System):
 
 
     def process(self):
+        # TODO: check if we want to add Velocity component or keep it all time
         for _, (player, v, r) in self.get_components(Player, Velocity, Renderable):
             while player.has_data:
                 data = player.recv()
@@ -120,14 +121,17 @@ class RenderSystem(System):
             player.cam_y = - H2 + CAM_MARGIN + pos.y
             player.cam_dirty = True
 
-    def draw_terrain(self, player, MX, MY):
+        self.mx = player.cam_x - int(player.win_w/2)
+        self.my = player.cam_y - int(player.win_h/2)
+
+    def draw_terrain(self, player):
         for _, (t,) in self.get_components(Terrain):
             last_c = None
 
             player.write(mv_cursor())
             for y in range(player.win_h):
                 for x in range(player.win_w):
-                    c = t.get(x+MX, y+MY)
+                    c = t.get(x+self.mx, y+self.my)
                     if c != last_c:
                         player.write(color_bg(c))
                         last_c = c
@@ -142,16 +146,14 @@ class RenderSystem(System):
 
             self.update_camera(player, player_pos)
 
-            MX = player.cam_x - int(player.win_w/2)
-            MY = player.cam_y - int(player.win_h/2)
 
             if player.win_resized or player.cam_dirty:
-                self.draw_terrain(player, MX, MY)
+                self.draw_terrain(player)
                 player.win_resized = False
                 player.cam_dirty = False
 
             for es, (pos, renderable) in self.get_components(Position, Renderable):
-                # self.animate(obj)
+                self.animate(renderable)
 
                 if not renderable.dirty:
                     continue
@@ -163,7 +165,7 @@ class RenderSystem(System):
                 for _, (terrain,) in self.get_components(Terrain):
                     if is_player:
                         player.write(color_bg(terrain.get(pos.ox,pos.oy)))
-                        player.write(mv_cursor(pos.ox-MX, pos.oy-MY, ' '))
+                        player.write(mv_cursor(pos.ox-self.mx, pos.oy-self.my, ' '))
                     
                     if is_player_self:
                         player.write(color_fg(5))
@@ -174,48 +176,48 @@ class RenderSystem(System):
 
 
                     player.write(color_bg(terrain.get(pos.x, pos.y)))
-                    player.write(mv_cursor(pos.x-MX, pos.y-MY, renderable.fg_char))
+                    player.write(mv_cursor(pos.x-self.mx, pos.y-self.my, renderable.fg_char))
 
                 renderable.dirty = False
 
-            # player.write(color_reset())
-            # for i in range(player.win_h - 6, player.win_h - 1):
-            #     player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
+            player.write(color_reset())
+            for i in range(player.win_h - 6, player.win_h - 1):
+                player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
             
-            # player.write(mv_cursor(2, player.win_h - 5))
-            # player.write(f'W: {player.win_w} x {player.win_h}')
-            # player.write(mv_cursor(2, player.win_h - 4))
-            # player.write(f'CAM: {player.cam_x},{player.cam_y}')
-            # player.write(mv_cursor(2, player.win_h - 3))
-            # player.write(f'POS: {player_pos.x},{player_pos.y}')
-            # stomach = self.component_for_entity(ed, Stomach)
-            # hydration = self.component_for_entity(ed, Hydration)
-            # health = self.component_for_entity(ed, Health)
-            # player.write(mv_cursor(player.win_w-12, player.win_h-5))
-            # player.write('S'*round(stomach.level/10))
-            # player.write(mv_cursor(player.win_w-12, player.win_h-4))
-            # player.write('H'*round(hydration.level/10))
-            # player.write(mv_cursor(player.win_w-12, player.win_h-3))
-            # player.write('♡'*round(health.level/10))
+            player.write(mv_cursor(2, player.win_h - 5))
+            player.write(f'W: {player.win_w} x {player.win_h}')
+            player.write(mv_cursor(2, player.win_h - 4))
+            player.write(f'CAM: {player.cam_x},{player.cam_y}')
+            player.write(mv_cursor(2, player.win_h - 3))
+            player.write(f'POS: {player_pos.x},{player_pos.y}')
+            stomach = self.component_for_entity(ed, Stomach)
+            hydration = self.component_for_entity(ed, Hydration)
+            health = self.component_for_entity(ed, Health)
+            player.write(mv_cursor(player.win_w-12, player.win_h-5))
+            player.write('S'*round(stomach.level/10))
+            player.write(mv_cursor(player.win_w-12, player.win_h-4))
+            player.write('H'*round(hydration.level/10))
+            player.write(mv_cursor(player.win_w-12, player.win_h-3))
+            player.write('♡'*round(health.level/10))
             
 
             player.write(mv_cursor())
             player.flush()
 
-    def animate(self, obj):
+    def animate(self, renderable):
         t = time()
 
-        if obj.fg_animation and (t - obj.fg_animation_time > 1 / obj.fg_animation_speed):
-            animation_length = len(obj.fg_animation)
-            current_animation_idx = obj.fg_animation.find(obj.fg_char)
-            obj.fg_char = obj.fg_animation[(current_animation_idx+1) % animation_length]
-            obj.fg_animation_time = t
+        if renderable.fg_animation and (t - renderable.fg_animation_time > 1 / renderable.fg_animation_speed):
+            animation_length = len(renderable.fg_animation)
+            current_animation_idx = renderable.fg_animation.find(renderable.fg_char)
+            renderable.fg_char = renderable.fg_animation[(current_animation_idx+1) % animation_length]
+            renderable.fg_animation_time = t
 
-        if obj.bg_animation and (t - obj.bg_animation_time > 1 / obj.bg_animation_speed):
-            animation_length = len(obj.bg_animation)
-            current_animation_idx = obj.bg_animation.find(obj.bg_char)
-            obj.bg_char = obj.bg_animation[(current_animation_idx+1) % animation_length]
-            obj.bg_animation_time = t
+        if renderable.bg_animation and (t - renderable.bg_animation_time > 1 / renderable.bg_animation_speed):
+            animation_length = len(renderable.bg_animation)
+            current_animation_idx = renderable.bg_animation.find(renderable.bg_char)
+            renderable.bg_char = renderable.bg_animation[(current_animation_idx+1) % animation_length]
+            renderable.bg_animation_time = t
 
     def process(self):
         self.render()
