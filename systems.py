@@ -120,6 +120,21 @@ class RenderSystem(System):
             player.cam_y = - H2 + CAM_MARGIN + pos.y
             player.cam_dirty = True
 
+    def draw_terrain(self, player, MX, MY):
+        for _, (t,) in self.get_components(Terrain):
+            last_c = None
+
+            player.write(mv_cursor())
+            for y in range(player.win_h):
+                for x in range(player.win_w):
+                    c = t.get(x+MX, y+MY)
+                    if c != last_c:
+                        player.write(color_bg(c))
+                        last_c = c
+                    player.write(' ')
+            player.flush()
+
+
     def render(self):
         for ed, (player, player_pos) in self.get_components(Player, Position):
             if player.win_resized:
@@ -130,22 +145,8 @@ class RenderSystem(System):
             MX = player.cam_x - int(player.win_w/2)
             MY = player.cam_y - int(player.win_h/2)
 
-            for e, (t,) in self.get_components(Terrain):
-                terrain = t
-
-                last_c = None
-
-                if player.win_resized or player.cam_dirty:
-                    player.write(mv_cursor())
-                    for y in range(player.win_h):
-                        for x in range(player.win_w):
-                            c = t.get(x+MX, y+MY)
-                            if c != last_c:
-                                player.write(color_bg(c))
-                                last_c = c
-                            player.write(' ')
-                    player.flush()
-
+            if player.win_resized or player.cam_dirty:
+                self.draw_terrain(player, MX, MY)
                 player.win_resized = False
                 player.cam_dirty = False
 
@@ -159,43 +160,43 @@ class RenderSystem(System):
                 is_player = self.has_component(es, Player)
                 is_player_self = ed == es and is_player
 
-                if is_player:
-                    player.write(color_bg(terrain.get(pos.ox,pos.oy)))
-                    player.write(mv_cursor(pos.ox-MX, pos.oy-MY, ' '))
-                
-                if is_player_self:
-                    player.write(color_fg(5))
-                    player.write(bold())
-                else:
-                    player.write(color_fg(renderable.fg_color))
+                for _, (terrain,) in self.get_components(Terrain):
+                    if is_player:
+                        player.write(color_bg(terrain.get(pos.ox,pos.oy)))
+                        player.write(mv_cursor(pos.ox-MX, pos.oy-MY, ' '))
+                    
+                    if is_player_self:
+                        player.write(color_fg(5))
+                        player.write(bold())
+                    else:
+                        player.write(color_fg(renderable.fg_color))
 
 
 
-                player.write(color_bg(terrain.get(pos.x, pos.y)))
-                player.write(mv_cursor(pos.x-MX, pos.y-MY, renderable.fg_char))
+                    player.write(color_bg(terrain.get(pos.x, pos.y)))
+                    player.write(mv_cursor(pos.x-MX, pos.y-MY, renderable.fg_char))
 
-                # player.write(color_reset())
                 renderable.dirty = False
 
-            player.write(color_reset())
-            for i in range(player.win_h - 6, player.win_h - 1):
-                player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
+            # player.write(color_reset())
+            # for i in range(player.win_h - 6, player.win_h - 1):
+            #     player.write(mv_cursor(1, i, ' '* (player.win_w - 2)))
             
-            player.write(mv_cursor(2, player.win_h - 5))
-            player.write(f'W: {player.win_w} x {player.win_h}')
-            player.write(mv_cursor(2, player.win_h - 4))
-            player.write(f'CAM: {player.cam_x},{player.cam_y}')
-            player.write(mv_cursor(2, player.win_h - 3))
-            player.write(f'POS: {player_pos.x},{player_pos.y}')
-            stomach = self.component_for_entity(ed, Stomach)
-            hydration = self.component_for_entity(ed, Hydration)
-            health = self.component_for_entity(ed, Health)
-            player.write(mv_cursor(player.win_w-12, player.win_h-5))
-            player.write('S'*round(stomach.level/10))
-            player.write(mv_cursor(player.win_w-12, player.win_h-4))
-            player.write('H'*round(hydration.level/10))
-            player.write(mv_cursor(player.win_w-12, player.win_h-3))
-            player.write('♡'*round(health.level/10))
+            # player.write(mv_cursor(2, player.win_h - 5))
+            # player.write(f'W: {player.win_w} x {player.win_h}')
+            # player.write(mv_cursor(2, player.win_h - 4))
+            # player.write(f'CAM: {player.cam_x},{player.cam_y}')
+            # player.write(mv_cursor(2, player.win_h - 3))
+            # player.write(f'POS: {player_pos.x},{player_pos.y}')
+            # stomach = self.component_for_entity(ed, Stomach)
+            # hydration = self.component_for_entity(ed, Hydration)
+            # health = self.component_for_entity(ed, Health)
+            # player.write(mv_cursor(player.win_w-12, player.win_h-5))
+            # player.write('S'*round(stomach.level/10))
+            # player.write(mv_cursor(player.win_w-12, player.win_h-4))
+            # player.write('H'*round(hydration.level/10))
+            # player.write(mv_cursor(player.win_w-12, player.win_h-3))
+            # player.write('♡'*round(health.level/10))
             
 
             player.write(mv_cursor())
