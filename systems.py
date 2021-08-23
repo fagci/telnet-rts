@@ -192,10 +192,11 @@ class RenderSystem(System):
                     continue
 
                 ox, oy = round(pos.ox - self.mx), round(pos.oy - self.my)
+                px , py = round(pos.x), round(pos.y)
                 x, y = round(pos.x - self.mx), round(pos.y - self.my)
                 # FIXME: another player draws wrong terrain bg
-                terrain_obg = terrain.get(pos.ox, pos.oy)
-                terrain_bg = terrain.get(pos.x, pos.y)
+                terrain_obg = terrain.get(round(pos.ox), round(pos.oy))
+                terrain_bg = terrain.get(px, py)
 
                 for player_id, (player, player_pos) in self.get_components(Player, Position):
                     # draw objects only visible to player
@@ -242,9 +243,9 @@ class RenderSystem(System):
         player.write(mv_cursor(2, player.win_h - 5))
         player.write(f'W: {player.win_w} x {player.win_h}')
         player.write(mv_cursor(2, player.win_h - 4))
-        player.write(f'CAM: {player.cam_x},{player.cam_y}')
+        player.write(f'CAM: {round(player.cam_x)},{round(player.cam_y)}')
         player.write(mv_cursor(2, player.win_h - 3))
-        player.write(f'POS: {player_pos.x},{player_pos.y}')
+        player.write(f'POS: {round(player_pos.x)},{round(player_pos.y)}')
 
         player.write(bold())
         

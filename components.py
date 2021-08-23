@@ -88,7 +88,7 @@ class Terrain(Dirtyable):
     OCEAN = 19
     WATER = 31
     SAND = 222
-    SANDGRASS = 94
+    SANDGRASS = 178
     GRASS = 22
     GRASS_LIGHT = 100
     ROCK = 240
@@ -100,7 +100,7 @@ class Terrain(Dirtyable):
         self.octaves = [OpenSimplex(seed + i) for i in range(self.LOD)]
 
 
-    @lru_cache(10000)
+    @lru_cache(4096)
     def get(self, x, y):
         v = 0.0
         divisor = 0.0
@@ -115,9 +115,9 @@ class Terrain(Dirtyable):
 
         v /= divisor
 
-        if v < - 0.1:
+        if v < -0.1:
             b = self.OCEAN
-        elif v < -0.063:
+        elif v <= 0:
             b = self.WATER
         elif v < 0.02:
             b = self.SAND
