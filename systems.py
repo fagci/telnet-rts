@@ -57,6 +57,7 @@ class TelnetSystem(System):
 
                     if block in [Terrain.WATER, Terrain.OCEAN]:
                         speed = 0.3
+
                     elif block == Terrain.SAND:
                         speed = 0.7
 

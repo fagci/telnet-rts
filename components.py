@@ -83,6 +83,7 @@ class Velocity(Vector2):
 
 class Terrain(Dirtyable):
     SCALE = 0.01
+    LOD = 5
 
     OCEAN = 19
     WATER = 31
@@ -96,20 +97,22 @@ class Terrain(Dirtyable):
 
     def __init__(self, seed = 0):
         from opensimplex import OpenSimplex
-        self.octaves = [OpenSimplex(seed + i) for i in range(5)]
+        self.octaves = [OpenSimplex(seed + i) for i in range(self.LOD)]
 
 
     @lru_cache(10000)
     def get(self, x, y):
         v = 0.0
         divisor = 0.0
-        amplitude = 0.5
-        nx = (float(x) / (200 * amplitude)) - amplitude
-        ny = (float(y) / (200 * amplitude)) - amplitude
+
+        nx = x*self.SCALE
+        ny = y*self.SCALE
+
         for i, n in enumerate(self.octaves):
             f = 2**i
             divisor += 1.0 / f
             v += n.noise2d(f*nx, f*ny) / f
+
         v /= divisor
 
         if v < - 0.1:
