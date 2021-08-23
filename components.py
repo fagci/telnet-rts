@@ -119,7 +119,7 @@ class Velocity(Vector2):
 
 
 class Terrain(Dirtyable):
-    SCALE = 0.01
+    SCALE = 0.008
     LOD = 5
 
     OCEAN = 19
@@ -132,11 +132,11 @@ class Terrain(Dirtyable):
     SNOW = 255
     
 
-    def __init__(self, seed = 0):
+    def __init__(self, seed = 1):
         from opensimplex import OpenSimplex
         self.noise2d_generators = [OpenSimplex(seed + i).noise2d for i in range(self.LOD)]
 
-    @lru_cache(4096)
+    @lru_cache(maxsize=4096)
     def get_value(self, x, y):
         v = 0.0
         divisor = 0.0
@@ -174,7 +174,7 @@ class Terrain(Dirtyable):
             b = self.GRASS_LIGHT
         elif v < 0.46:
             b = self.GRASS
-        elif v < 0.5:
+        elif v < 0.52:
             b = self.ROCK
         else:
             b = self.SNOW
