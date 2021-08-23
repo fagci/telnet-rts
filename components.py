@@ -134,11 +134,10 @@ class Terrain(Dirtyable):
 
     def __init__(self, seed = 0):
         from opensimplex import OpenSimplex
-        self.octaves = [OpenSimplex(seed + i) for i in range(self.LOD)]
-
+        self.noise2d_generators = [OpenSimplex(seed + i).noise2d for i in range(self.LOD)]
 
     @lru_cache(4096)
-    def get(self, x, y):
+    def get_value(self, x, y):
         v = 0.0
         divisor = 0.0
 
@@ -148,10 +147,21 @@ class Terrain(Dirtyable):
         for i in range(self.LOD):
             f = 2**i
             divisor += 1.0 / f
-            v += self.octaves[i].noise2d(f*nx, f*ny) / f
+            v += self.noise2d_generators[i](f*nx, f*ny) / f
 
         v /= divisor
 
+        return v
+
+    def get(self, x, y):
+        return self.get_bg(self.get_value(x,y))
+
+    def get_entity(self, x, y):
+        v = self.get_value(x, y)
+        bg = self.get_bg(v)
+        return bg == self.GRASS_LIGHT and v * self.noise2d_generators[0](x, y) < -0.14
+
+    def get_bg(self, v):
         if v < -0.1:
             b = self.OCEAN
         elif v <= 0:
@@ -168,7 +178,6 @@ class Terrain(Dirtyable):
             b = self.ROCK
         else:
             b = self.SNOW
-
 
         return b
 

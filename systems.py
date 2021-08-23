@@ -172,11 +172,18 @@ class RenderSystem(System):
             
             for y in range(player.win_h):
                 for x in range(player.win_w):
-                    c = terrain.get(x+self.mx, y+self.my)
+                    px, py = x + self.mx, y + self.my
+                    c = terrain.get(px, py)
+                    char = ' '
+                    if c == Terrain.GRASS_LIGHT:
+                        is_tree = terrain.get_entity(px, py)
+                        if is_tree:
+                            player.color_fg(Terrain.GRASS)
+                            char = '▲'
                     if c != last_c:
                         player.color_bg(c)
                         last_c = c
-                    player.write(' ')
+                    player.write(char)
 
             player.flush()
 
