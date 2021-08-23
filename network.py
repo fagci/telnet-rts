@@ -1,7 +1,7 @@
 from random import randrange
 from selectors import DefaultSelector, EVENT_READ, EVENT_WRITE
 from socket import SOL_SOCKET, SO_REUSEADDR, socket
-from telnetlib import DO, DONT, ECHO, IAC, NAWS, SGA, WILL
+from telnetlib import DO, DONT, ECHO, IAC, NAWS, SB, SE, SGA, TSPEED, WILL
 from threading import Thread
 
 from esper import World
@@ -55,6 +55,9 @@ class NetworkThread(Thread):
         connection.send(IAC + DO + NAWS);
         connection.send(IAC + WILL + SGA);
         connection.send(IAC + DO + SGA);
+
+        # connection.send(IAC + WILL + TSPEED)
+        connection.send(IAC + SB + TSPEED + b'1,1' + IAC + SE)
         
         self.__create_player(connection, addr)
     

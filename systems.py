@@ -1,3 +1,4 @@
+from random import randrange
 from struct import unpack
 from telnetlib import IAC, NAWS, SB
 from time import time
@@ -163,18 +164,23 @@ class RenderSystem(System):
         self.my = player.cam_y - round(player.win_h/2)
 
     def draw_terrain(self, player):
-        for _, (t,) in self.get_components(Terrain):
+        for _, (terrain,) in self.get_components(Terrain):
             last_c = None
 
+            t1 = time()
             player.mv_cursor()
+            
             for y in range(player.win_h):
                 for x in range(player.win_w):
-                    c = t.get(x+self.mx, y+self.my)
+                    c = terrain.get(x+self.mx, y+self.my)
                     if c != last_c:
                         player.color_bg(c)
                         last_c = c
                     player.write(' ')
+
             player.flush()
+
+            self.log('terrain t:', time() - t1)
 
 
     def render(self):
@@ -272,9 +278,6 @@ class RenderSystem(System):
         player.color_fg(124)
         player.mv_cursor(player.win_w-19, player.win_h-2)
         player.write('HEALTH ' + '●'*round(health.level/10))
-
-        player.color_reset()
-        
 
 
     def animate(self, renderable):

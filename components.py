@@ -127,9 +127,9 @@ class Terrain(Dirtyable):
     SAND = 222
     SANDGRASS = 178
     GRASS = 22
-    GRASS_LIGHT = 100
+    GRASS_LIGHT = 28
     ROCK = 240
-    SNOW = 7
+    SNOW = 255
     
 
     def __init__(self, seed = 0):
@@ -145,10 +145,10 @@ class Terrain(Dirtyable):
         nx = x*self.SCALE
         ny = y*self.SCALE
 
-        for i, n in enumerate(self.octaves):
+        for i in range(self.LOD):
             f = 2**i
             divisor += 1.0 / f
-            v += n.noise2d(f*nx, f*ny) / f
+            v += self.octaves[i].noise2d(f*nx, f*ny) / f
 
         v /= divisor
 
@@ -160,11 +160,11 @@ class Terrain(Dirtyable):
             b = self.SAND
         elif v < 0.15:
             b = self.SANDGRASS
-        elif v < 0.4:
-            b = self.GRASS
-        elif v < 0.46:
+        elif v < 0.3:
             b = self.GRASS_LIGHT
-        elif v < 0.49:
+        elif v < 0.46:
+            b = self.GRASS
+        elif v < 0.5:
             b = self.ROCK
         else:
             b = self.SNOW
