@@ -131,8 +131,8 @@ class MovementSystem(System):
 class RenderSystem(System):
     def update_camera(self, player, pos):
         CAM_MARGIN = 8
-        W2 = int(player.win_w / 2)
-        H2 = int(player.win_h / 2)
+        W2 = round(player.win_w / 2)
+        H2 = round(player.win_h / 2)
 
         if pos.x < player.cam_x - W2 + CAM_MARGIN:
             player.cam_x = W2 - CAM_MARGIN + pos.x
@@ -148,8 +148,8 @@ class RenderSystem(System):
             player.cam_y = - H2 + CAM_MARGIN + pos.y
             player.cam_dirty = True
 
-        self.mx = player.cam_x - int(player.win_w/2)
-        self.my = player.cam_y - int(player.win_h/2)
+        self.mx = player.cam_x - round(player.win_w/2)
+        self.my = player.cam_y - round(player.win_h/2)
 
     def draw_terrain(self, player):
         for _, (t,) in self.get_components(Terrain):
@@ -190,8 +190,8 @@ class RenderSystem(System):
                 if not renderable.dirty:
                     continue
 
-                ox, oy = pos.ox - self.mx, pos.oy - self.my
-                x, y = pos.x - self.mx, pos.y - self.my
+                ox, oy = round(pos.ox - self.mx), round(pos.oy - self.my)
+                x, y = round(pos.x - self.mx), round(pos.y - self.my)
                 # FIXME: another player draws wrong terrain bg
                 terrain_obg = terrain.get(pos.ox, pos.oy)
                 terrain_bg = terrain.get(pos.x, pos.y)
