@@ -1,12 +1,22 @@
+from struct import unpack
 from telnetlib import IAC, NAWS, SB
 from time import time
 
 from esper import Processor, World
 
-from components import Connect, Disconnect, Health, Hydration, Oxygen, Player, Position, Renderable, Stomach, Terrain, Velocity
-from styles import bold, cls, color_bg, color_fg, hide_cursor, mv_cursor, color_reset, show_cursor
-
-from struct import unpack
+from components import (
+    Connect,
+    Disconnect,
+    Health,
+    Hydration,
+    Oxygen,
+    Player,
+    Position,
+    Renderable,
+    Stomach,
+    Terrain,
+    Velocity,
+)
 
 class KeyCodes:
     UP = b'\x1b[A'
@@ -82,13 +92,13 @@ class PlayerSystem(System):
         for e, (_, player) in self.get_components(Disconnect, Player):
             self.log('-', player.id)
             # FIXME: render before leave
-            player.send(show_cursor())
+            player.show_cursor()
             self.remove_component(e, Disconnect)
             self.delete_entity(e)
 
         for e, (_, player) in self.get_components(Connect, Player):
             self.log('+', player.id)
-            player.write(hide_cursor())
+            player.hide_cursor()
             self.remove_component(e, Connect)
 
 class HealthSystem(System):
@@ -156,12 +166,12 @@ class RenderSystem(System):
         for _, (t,) in self.get_components(Terrain):
             last_c = None
 
-            player.write(mv_cursor())
+            player.mv_cursor()
             for y in range(player.win_h):
                 for x in range(player.win_w):
                     c = t.get(x+self.mx, y+self.my)
                     if c != last_c:
-                        player.write(color_bg(c))
+                        player.color_bg(c)
                         last_c = c
                     player.write(' ')
             player.flush()
@@ -171,7 +181,7 @@ class RenderSystem(System):
         # draw terrain for each player
         for ed, (player, player_pos) in self.get_components(Player, Position):
             if player.win_resized:
-                player.write(cls())
+                player.cls()
                 player.cam_x = player_pos.x
                 player.cam_y = player_pos.y
 
@@ -206,13 +216,13 @@ class RenderSystem(System):
                     is_player_self = obj_id == player_id
 
                     # clear old pos with terrain color
-                    player.write(color_bg(terrain_obg))
-                    player.write(mv_cursor(ox, oy, ' '))
+                    player.color_bg(terrain_obg)
+                    player.mv_cursor(ox, oy, ' ')
                     
-                    player.write(color_bg(terrain_bg))
-                    player.write(color_fg(1 if is_player_self else renderable.fg_color))
+                    player.color_bg(terrain_bg)
+                    player.color_fg(1 if is_player_self else renderable.fg_color)
 
-                    player.write(mv_cursor(x, y, renderable.fg_char))
+                    player.mv_cursor(x, y, renderable.fg_char)
 
                 renderable.dirty = False
 
@@ -221,7 +231,7 @@ class RenderSystem(System):
 
         # reset cursor position & writeout buffer
         for ed, (player,) in self.get_components(Player):
-            player.write(mv_cursor())
+            player.mv_cursor()
             player.flush()
             player.win_resized = False
             player.cam_dirty = False
@@ -232,43 +242,38 @@ class RenderSystem(System):
         oxygen = self.component_for_entity(ed, Oxygen)
         health = self.component_for_entity(ed, Health)
 
-        player.write(color_reset())
+        player.color_reset()
 
-        player.write(mv_cursor(2, player.id))
+        player.mv_cursor(2, player.id)
         player.write(f'Player {player.id}')
         
         for i in range(player.win_h - 5, player.win_h - 1):
-            player.write(mv_cursor(1, i, ' '*(player.win_w - 2)))
+            player.mv_cursor(1, i, ' '*(player.win_w - 2))
         
-        player.write(mv_cursor(2, player.win_h - 5))
+        player.mv_cursor(2, player.win_h - 5)
         player.write(f'W: {player.win_w} x {player.win_h}')
-        player.write(mv_cursor(2, player.win_h - 4))
+        player.mv_cursor(2, player.win_h - 4)
         player.write(f'CAM: {round(player.cam_x)},{round(player.cam_y)}')
-        player.write(mv_cursor(2, player.win_h - 3))
+        player.mv_cursor(2, player.win_h - 3)
         player.write(f'POS: {round(player_pos.x)},{round(player_pos.y)}')
 
-        player.write(bold())
-        
-        player.write(color_fg(94))
-        player.write(mv_cursor(player.win_w-19, player.win_h-5))
-        player.write('  FOOD ')
-        player.write('●'*round(stomach.level/10))
+        player.color_fg(94)
+        player.mv_cursor(player.win_w-19, player.win_h-5)
+        player.write('  FOOD ' + '●'*round(stomach.level/10))
 
-        player.write(color_fg(Terrain.WATER))
-        player.write(mv_cursor(player.win_w-19, player.win_h-4))
-        player.write(' WATER ')
-        player.write('●'*round(hydration.level/10))
+        player.color_fg(Terrain.WATER)
+        player.mv_cursor(player.win_w-19, player.win_h-4)
+        player.write(' WATER ' + '●'*round(hydration.level/10))
         
-        player.write(color_fg(7))
-        player.write(mv_cursor(player.win_w-19, player.win_h-3))
-        player.write('OXYGEN ')
-        player.write('●'*round(oxygen.level/10))
+        player.color_fg(7)
+        player.mv_cursor(player.win_w-19, player.win_h-3)
+        player.write('OXYGEN ' + '●'*round(oxygen.level/10))
         
-        player.write(color_fg(124))
-        player.write(mv_cursor(player.win_w-19, player.win_h-2))
-        player.write('HEALTH ')
-        player.write('●'*round(health.level/10))
-        player.write(color_reset())
+        player.color_fg(124)
+        player.mv_cursor(player.win_w-19, player.win_h-2)
+        player.write('HEALTH ' + '●'*round(health.level/10))
+
+        player.color_reset()
         
 
 

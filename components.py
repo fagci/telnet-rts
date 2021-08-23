@@ -34,10 +34,47 @@ class Player:
             self.__buffer.clear()
 
     def send(self, data):
+        self.flush()
         self.q_out.put(data)
 
     def recv(self):
         return self.q_in.get()
+
+    def mv_cursor(self, x=0, y=0, text=''):
+        x = round(x)
+        y = round(y)
+        if x < 0 or y < 0:
+            self.write('')
+        elif x == 0:
+            self.write(f'\033[{y+1}H{text}')
+        elif y == 0:
+            self.write(f'\033[;{x+1}H{text}')
+        else:
+            self.write(f'\033[{y+1};{x+1}H{text}')
+
+    def cls(self):
+        self.write('\033[2J')
+
+    def show_cursor(self):
+        self.write('\033[?25h')
+
+    def hide_cursor(self):
+        self.write('\033[?25l')
+
+    def color_fg(self, c):
+        self.write(f'\033[38;5;{c}m')
+
+    def color_bg(self, c):
+        self.write(f'\033[48;5;{c}m')
+
+    def color(self, c):
+        self.write(f'\033[{c}m')
+
+    def color_reset(self):
+        self.write('\033[0m')
+
+    def bold(self):
+        self.write('\033[1m')
 
     @property
     def has_data(self):
