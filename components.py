@@ -25,6 +25,8 @@ class Player:
 
     def write(self, data):
         self.__buffer.append(data)
+        if len(self.__buffer) > 1024:
+            self.flush()
 
     def flush(self):
         if len(self.__buffer):
@@ -82,37 +84,51 @@ class Velocity(Vector2):
 class Terrain(Dirtyable):
     SCALE = 0.01
 
+    OCEAN = 19
     WATER = 31
     SAND = 222
+    SANDGRASS = 94
     GRASS = 22
-    GRASS_LIGHT = 70
+    GRASS_LIGHT = 100
     ROCK = 240
     SNOW = 7
     
 
-    def __init__(self):
+    def __init__(self, seed = 0):
         from opensimplex import OpenSimplex
-        from random import seed
-        seed(0)
-        self.noise = OpenSimplex()
+        self.octaves = [OpenSimplex(seed + i) for i in range(5)]
 
 
-    @lru_cache(1024)
+    @lru_cache(10000)
     def get(self, x, y):
-        v = (self.noise.noise2d(x*self.SCALE, y*self.SCALE) + 1)/2
+        v = 0.0
+        divisor = 0.0
+        amplitude = 0.5
+        nx = (float(x) / (200 * amplitude)) - amplitude
+        ny = (float(y) / (200 * amplitude)) - amplitude
+        for i, n in enumerate(self.octaves):
+            f = 2**i
+            divisor += 1.0 / f
+            v += n.noise2d(f*nx, f*ny) / f
+        v /= divisor
 
-        if v > 0.85:
-            b = Terrain.SNOW
-        elif v > 0.7:
-            b = Terrain.ROCK
-        elif v > 0.45:
-            b = Terrain.GRASS_LIGHT
-        elif v > 0.18:
-            b = Terrain.GRASS
-        elif v > 0.15:
-            b = Terrain.SAND
+        if v < - 0.1:
+            b = self.OCEAN
+        elif v < -0.063:
+            b = self.WATER
+        elif v < 0.02:
+            b = self.SAND
+        elif v < 0.15:
+            b = self.SANDGRASS
+        elif v < 0.4:
+            b = self.GRASS
+        elif v < 0.46:
+            b = self.GRASS_LIGHT
+        elif v < 0.49:
+            b = self.ROCK
         else:
-            b = Terrain.WATER
+            b = self.SNOW
+
 
         return b
 

@@ -55,7 +55,7 @@ class TelnetSystem(System):
 
                     speed = 1
 
-                    if block == Terrain.WATER:
+                    if block in [Terrain.WATER, Terrain.OCEAN]:
                         speed = 0.3
                     elif block == Terrain.SAND:
                         speed = 0.7
@@ -96,7 +96,7 @@ class HealthSystem(System):
             for _, (pos, v, stomach, hydration, oxygen, health) in self.get_components(Position, Velocity, Stomach, Hydration, Oxygen, Health):
                 block = t.get(pos.x, pos.y)
 
-                if block == Terrain.WATER:
+                if block in [Terrain.WATER, Terrain.OCEAN]:
                     hydration.add(1)
                     oxygen.sub(0.5)
                 else:
