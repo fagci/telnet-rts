@@ -143,25 +143,25 @@ class MovementSystem(System):
 class RenderSystem(System):
     def update_camera(self, player, pos):
         CAM_MARGIN = 8
-        W2 = round(player.win_w / 2)
-        H2 = round(player.win_h / 2)
+        W2 = player.win_w / 2
+        H2 = player.win_h / 2
 
         if pos.x < player.cam_x - W2 + CAM_MARGIN:
-            player.cam_x = W2 - CAM_MARGIN + pos.x
+            player.cam_x = round(W2 - CAM_MARGIN + pos.x)
             player.cam_dirty = True
         elif pos.x > player.cam_x + W2 - CAM_MARGIN:
-            player.cam_x = - W2 + CAM_MARGIN + pos.x
+            player.cam_x = round(-W2 + CAM_MARGIN + pos.x)
             player.cam_dirty = True
 
         if pos.y < player.cam_y - H2 + CAM_MARGIN:
-            player.cam_y = H2 - CAM_MARGIN + pos.y
+            player.cam_y = round(H2 - CAM_MARGIN + pos.y)
             player.cam_dirty = True
         elif pos.y > player.cam_y + H2 - CAM_MARGIN:
-            player.cam_y = - H2 + CAM_MARGIN + pos.y
+            player.cam_y = round(-H2 + CAM_MARGIN + pos.y)
             player.cam_dirty = True
 
-        self.mx = player.cam_x - round(player.win_w/2)
-        self.my = player.cam_y - round(player.win_h/2)
+        self.mx = round(player.cam_x - player.win_w/2)
+        self.my = round(player.cam_y - player.win_h/2)
 
     def draw_terrain(self, player):
         for _, (terrain,) in self.get_components(Terrain):
@@ -170,13 +170,12 @@ class RenderSystem(System):
             t1 = time()
             player.mv_cursor()
             
-            for y in range(player.win_h):
-                for x in range(player.win_w):
-                    px, py = x + self.mx, y + self.my
-                    c = terrain.get(px, py)
+            for y in range(round(self.my), round(self.my + player.win_h)):
+                for x in range(round(self.mx), round(self.mx + player.win_w)):
+                    c = terrain.get(x, y)
                     char = ' '
                     if c == Terrain.GRASS_LIGHT:
-                        is_tree = terrain.get_entity(px, py)
+                        is_tree = terrain.get_entity(x, y)
                         if is_tree:
                             player.color_fg(Terrain.GRASS)
                             char = '▲'
@@ -215,11 +214,11 @@ class RenderSystem(System):
                     continue
 
                 ox, oy = round(pos.ox - self.mx), round(pos.oy - self.my)
-                px , py = round(pos.x), round(pos.y)
                 x, y = round(pos.x - self.mx), round(pos.y - self.my)
+
                 # FIXME: another player draws wrong terrain bg
                 terrain_obg = terrain.get(round(pos.ox), round(pos.oy))
-                terrain_bg = terrain.get(px, py)
+                terrain_bg = terrain.get(round(pos.x), round(pos.y))
 
                 for player_id, (player, player_pos) in self.get_components(Player, Position):
                     # draw objects only visible to player
@@ -266,7 +265,7 @@ class RenderSystem(System):
         player.mv_cursor(2, player.win_h - 5)
         player.write(f'W: {player.win_w} x {player.win_h}')
         player.mv_cursor(2, player.win_h - 4)
-        player.write(f'CAM: {round(player.cam_x)},{round(player.cam_y)}')
+        player.write(f'CAM: {player.cam_x},{player.cam_y}')
         player.mv_cursor(2, player.win_h - 3)
         player.write(f'POS: {round(player_pos.x)},{round(player_pos.y)}')
 

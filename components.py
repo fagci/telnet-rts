@@ -132,9 +132,10 @@ class Terrain(Dirtyable):
     SNOW = 255
     
 
-    def __init__(self, seed = 1):
+    def __init__(self, seed = 2):
         from opensimplex import OpenSimplex
         self.noise2d_generators = [OpenSimplex(seed + i).noise2d for i in range(self.LOD)]
+
 
     @lru_cache(maxsize=4096)
     def get_value(self, x, y):
@@ -153,13 +154,16 @@ class Terrain(Dirtyable):
 
         return v
 
+
     def get(self, x, y):
         return self.get_bg(self.get_value(x,y))
+
 
     def get_entity(self, x, y):
         v = self.get_value(x, y)
         bg = self.get_bg(v)
         return bg == self.GRASS_LIGHT and v * self.noise2d_generators[0](x, y) < -0.14
+
 
     def get_bg(self, v):
         if v < -0.1:
@@ -192,11 +196,13 @@ class Disconnect:
 @dataclass
 class Level:
     level: float = 100.0
+
     def sub(self, v):
         if self.level > 0:
             self.level -= v
         if self.level < 0:
             self.level = 0
+
     def add(self, v):
         if self.level < 100:
             self.level += v
