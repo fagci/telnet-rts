@@ -143,25 +143,26 @@ class MovementSystem(System):
 class RenderSystem(System):
     def update_camera(self, player, pos):
         CAM_MARGIN = 8
-        W2 = player.win_w / 2
-        H2 = player.win_h / 2
+        W2 = round(player.win_w / 2)
+        H2 = round(player.win_h / 2)
+        px, py = round(pos.x), round(pos.y)
 
         if pos.x < player.cam_x - W2 + CAM_MARGIN:
-            player.cam_x = round(W2 - CAM_MARGIN + pos.x)
+            player.cam_x = W2 - CAM_MARGIN + px
             player.cam_dirty = True
         elif pos.x > player.cam_x + W2 - CAM_MARGIN:
-            player.cam_x = round(-W2 + CAM_MARGIN + pos.x)
+            player.cam_x = -W2 + CAM_MARGIN + px
             player.cam_dirty = True
 
         if pos.y < player.cam_y - H2 + CAM_MARGIN:
-            player.cam_y = round(H2 - CAM_MARGIN + pos.y)
+            player.cam_y = H2 - CAM_MARGIN + py
             player.cam_dirty = True
         elif pos.y > player.cam_y + H2 - CAM_MARGIN:
-            player.cam_y = round(-H2 + CAM_MARGIN + pos.y)
+            player.cam_y = -H2 + CAM_MARGIN + py
             player.cam_dirty = True
 
-        self.mx = round(player.cam_x - player.win_w/2)
-        self.my = round(player.cam_y - player.win_h/2)
+        self.mx = player.cam_x - W2
+        self.my = player.cam_y - H2
 
     def draw_terrain(self, player):
         for _, (terrain,) in self.get_components(Terrain):
