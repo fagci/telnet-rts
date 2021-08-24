@@ -74,18 +74,17 @@ class TelnetSystem(System):
 
                     if data == KeyCodes.UP:
                         v.y -= speed
-                        r.dirty = True
                     elif data == KeyCodes.DOWN:
                         v.y += speed
-                        r.dirty = True
                     elif data == KeyCodes.LEFT:
                         v.x -= speed
-                        r.dirty = True
                     elif data == KeyCodes.RIGHT:
                         v.x += speed
-                        r.dirty = True
                     else:
                         self.process_cmd(player, r, data)
+
+                    if abs(v) > 0:
+                        r.dirty = True
 
 
 class PlayerSystem(System):
