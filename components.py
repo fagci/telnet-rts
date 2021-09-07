@@ -167,23 +167,21 @@ class Terrain(Dirtyable):
 
     def get_bg(self, v):
         if v < -0.1:
-            b = self.OCEAN
+            return self.OCEAN
         elif v <= 0:
-            b = self.WATER
+            return self.WATER
         elif v < 0.02:
-            b = self.SAND
+            return self.SAND
         elif v < 0.15:
-            b = self.SANDGRASS
+            return self.SANDGRASS
         elif v < 0.3:
-            b = self.GRASS_LIGHT
+            return self.GRASS_LIGHT
         elif v < 0.46:
-            b = self.GRASS
+            return self.GRASS
         elif v < 0.52:
-            b = self.ROCK
+            return self.ROCK
         else:
-            b = self.SNOW
-
-        return b
+            return self.SNOW
 
 
 class Connect:
@@ -200,14 +198,12 @@ class Level:
     def sub(self, v):
         if self.level > 0:
             self.level -= v
-        if self.level < 0:
-            self.level = 0
+        self.level = max(self.level, 0)
 
     def add(self, v):
         if self.level < 100:
             self.level += v
-        if self.level > 100:
-            self.level = 100
+        self.level = min(self.level, 100)
 
 class Health(Level):
     pass
